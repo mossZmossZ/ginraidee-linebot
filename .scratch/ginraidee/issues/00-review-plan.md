@@ -1,7 +1,7 @@
 # 00 — Review the implementation plan and operating decisions
 
 **Phase:** P0
-**Status:** Review
+**Status:** Review — awaiting project-owner decisions
 **Blocked by:** None — review can begin immediately.
 **Owner:** CEO + tech lead (identities pending)
 **Developer/tester rounds used:** N/A — planning review
@@ -33,7 +33,18 @@ Manual check: CEO/tech lead read the consolidated plan once and record acceptanc
 
 ## Evidence and handoff
 
-No implementation or verification evidence yet.
+Review preparation completed on 2026-10-15. The plan and discovery documents
+were cross-checked and candidate defaults were consolidated for owner review;
+they are not approved requirements yet.
+
+Required owner decisions before card 01 can move to Ready:
+
+- Approve, revise, or defer D1–D7, including language, license, retention,
+  and management-session rules.
+- Confirm the role/model arrangement or explicitly authorize a change from the
+  requested `sol`/`terra` setup.
+- Define late/out-of-order webhook handling, which the implementation plan
+  assigns to this review card.
 
 Review decisions: Not recorded.
 

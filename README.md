@@ -10,9 +10,8 @@ and image storage. Local and server deployments will use
 
 ## Project status
 
-Requirements and the development planning bundle are written. The plan is
-in review; application code, Compose files, agent execution, and testing have
-not started.
+Requirements and the development planning bundle are written. P0 is in review;
+application code, Compose files, agent execution, and testing have not started.
 
 ## Planning documents
 

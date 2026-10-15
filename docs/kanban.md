@@ -1,6 +1,6 @@
 # Development Kanban
 
-Status: Planning draft. No application implementation or testing has started.
+Status: P0 review is in progress. No application implementation or testing has started.
 
 The board and [individual cards](../.scratch/ginraidee/issues/) form the local
 planning tracker. Cards are not published to GitHub or another external tracker.
