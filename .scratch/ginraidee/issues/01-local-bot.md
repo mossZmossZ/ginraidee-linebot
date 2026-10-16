@@ -4,7 +4,7 @@
 **Status:** In development
 **Blocked by:** None — card 00 is complete.
 **Owner:** Separate `terra`, high chat
-**Developer/tester rounds used:** 0 / 3
+**Developer/tester rounds used:** 1 / 3
 
 ## What to build
 
@@ -12,9 +12,9 @@ An operator starts the Dockerized bot locally, and a signed LINE group command r
 
 ## Todo
 
-- [ ] Add the Python/FastAPI application, pinned dependencies and local Compose setup.
-- [ ] Add configuration, health checking and SQLite initialization on persistent storage.
-- [ ] Validate the raw-body webhook signature and route exact group commands.
+- [x] Add the Python/FastAPI application, pinned dependencies and local Compose setup.
+- [x] Add configuration, health checking and SQLite initialization on persistent storage.
+- [x] Validate the raw-body webhook signature and route exact group commands.
 - [ ] Add focused signed-webhook and container startup checks.
 
 ## Acceptance criteria
@@ -35,6 +35,8 @@ Manual check: Operator starts the local container and sends an initial command i
 ## Evidence and handoff
 
 Developer environment: current Codex workspace, Python 3.12.13 via `uv`.
+Relevant diff: `b80a063c1321c17d7c20b64f315c42fac592e227...HEAD` on
+`codex/card-01-local-bot`.
 
 Implemented the FastAPI webhook service, HMAC signature verification, exact
 group-command dispatch, initial Thai replies, SQLite initialization and durable
@@ -44,7 +46,7 @@ handling, and local startup instructions.
 Focused checks run:
 
 - `uv run --group dev ruff check .` — passed.
-- `uv run --group dev pytest` — 7 passed (one upstream Starlette deprecation
+- `uv run --group dev pytest` — 8 passed (one upstream Starlette deprecation
   warning).
 - `LINE_CHANNEL_SECRET=compose-check-secret LINE_CHANNEL_ACCESS_TOKEN=compose-check-token docker compose config` — passed.
 - Docker image build — not run: the local Docker daemon was unavailable
@@ -55,9 +57,12 @@ tunnel.
 
 | Round | Developer submission / checks | Tester result | Findings / next action |
 | --- | --- | --- | --- |
-| 1 | FastAPI/Docker foundation and focused checks recorded above | Not run | Await independent tester verification and local Docker smoke test once the daemon is running. |
+| 1 | FastAPI/Docker foundation, durable webhook-work recovery, and focused checks recorded above | Not run | Await independent tester verification and local Docker smoke test once the daemon is running. |
 
-Tech-lead review: Pending implementation review.
+Tech-lead review: Two-axis review found durable webhook recovery incomplete;
+the work item is now stored atomically with its group effect and resumes after
+a failed delivery/restart. Final review remains pending independent tester and
+Docker smoke evidence.
 CEO/manual disposition: Not recorded.
 Linked bugs / continuation: None recorded.
 

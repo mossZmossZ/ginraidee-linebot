@@ -17,6 +17,11 @@ class RecordingTransport:
         self.replies.append((reply_token, text))
 
 
+class FailingTransport:
+    async def reply_text(self, reply_token: str, text: str) -> None:
+        raise RuntimeError("simulated LINE outage")
+
+
 def signed_headers(secret: str, body: bytes) -> dict[str, str]:
     digest = hmac.new(secret.encode(), body, hashlib.sha256).digest()
     signature = base64.b64encode(digest).decode()
@@ -140,3 +145,25 @@ def test_restart_preserves_webhook_receipts(tmp_path: Path) -> None:
     assert after_restart.status_code == 200
     assert len(first_transport.replies) == 1
     assert restarted_transport.replies == []
+
+
+def test_startup_retries_durable_webhook_work_after_failed_delivery(tmp_path: Path) -> None:
+    settings = Settings(
+        channel_secret="test-channel-secret",
+        channel_access_token="test-access-token",
+        database_path=tmp_path / "state" / "ginraidee.db",
+    )
+    failed_client = TestClient(create_app(settings, FailingTransport()), raise_server_exceptions=False)
+
+    with failed_client:
+        failed_delivery = post_event(failed_client, text_event("@ginrai", event_id="event-retry"))
+
+    recovered_transport = RecordingTransport()
+    recovered_client = TestClient(create_app(settings, recovered_transport))
+    with recovered_client:
+        pass
+
+    assert failed_delivery.status_code == 500
+    assert recovered_transport.replies == [
+        ("reply-token", "ยังไม่มีร้านอาหารในกลุ่มนี้ พิมพ์ @ginrai-manage เพื่อเพิ่มร้านอาหาร")
+    ]

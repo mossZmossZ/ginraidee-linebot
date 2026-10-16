@@ -9,9 +9,9 @@ from fastapi import FastAPI, HTTPException, Request, Response, status
 
 from app.commands import CommandHandler
 from app.config import Settings
-from app.database import Database
+from app.database import Database, WebhookWork
 from app.security import has_valid_line_signature
-from app.transport import LineReplyTransport, ReplyTransport
+from app.transport import LineReplyTransport, NonRetryableReplyError, ReplyTransport
 
 
 def create_app(
@@ -26,6 +26,8 @@ def create_app(
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         database.initialize()
+        for work in database.resume_webhook_work():
+            await _process_work(work, database, command_handler)
         yield
 
     app = FastAPI(title="Ginraidee LINE Bot", lifespan=lifespan)
@@ -80,18 +82,33 @@ async def _dispatch_event(
     }:
         return
 
-    event_id = _event_id(event)
-    if not database.claim_webhook_event(event_id):
+    work = database.claim_webhook_event(_event_id(event), group_id, reply_token, text)
+    if work is None:
         return
+    await _process_work(work, database, command_handler, raise_on_failure=True)
+
+
+async def _process_work(
+    work: WebhookWork,
+    database: Database,
+    command_handler: CommandHandler,
+    *,
+    raise_on_failure: bool = False,
+) -> None:
     try:
-        if text == "@ginrai":
-            await command_handler.handle_ginrai(group_id, reply_token)
+        if work.command == "@ginrai":
+            await command_handler.handle_ginrai(work.group_id, work.reply_token)
         else:
-            await command_handler.handle_manage(group_id, reply_token)
+            await command_handler.handle_manage(work.group_id, work.reply_token)
+    except NonRetryableReplyError:
+        database.mark_webhook_processed(work.event_id)
+        return
     except Exception:
-        database.mark_webhook_retry(event_id)
-        raise
-    database.mark_webhook_processed(event_id)
+        database.mark_webhook_retry(work.event_id)
+        if raise_on_failure:
+            raise
+        return
+    database.mark_webhook_processed(work.event_id)
 
 
 def _event_id(event: dict[str, Any]) -> str:
