@@ -2,7 +2,7 @@
 
 **Phase:** P4
 **Status:** Todo
-**Blocked by:** [03 — Edit and delete restaurants in the group](03-edit-delete.md); [06 — Close at noon and recover stable results](06-close-polls.md)
+**Blocked by:** [03 — Edit and delete restaurants in the group](03-edit-delete.md); [06 — Close at noon and recover stable results](06-close-polls.md); [11 — Management setup and optional images](11-management-setup.md)
 **Owner:** Separate `terra`, high chat when the card is Ready
 **Developer/tester rounds used:** 0 / 3
 
@@ -16,6 +16,7 @@ An operator starts the full bot using only docker-compose-prod.yml and runtime c
 - [ ] Configure the agreed public HTTPS webhook endpoint and health checks.
 - [ ] Document and verify single-worker/closer deployment constraints and startup recovery.
 - [ ] Add a consistent SQLite backup/restore procedure.
+- [ ] Configure public HTTPS setup/API routes, LIFF/LINE Login, and private-chat rich-menu access in the same deployment.
 
 ## Acceptance criteria
 
@@ -26,6 +27,7 @@ An operator starts the full bot using only docker-compose-prod.yml and runtime c
 - [ ] A backup restores consistent restaurant records, polls/votes and retained source URLs in an isolated deployment.
 - [ ] Restart recovers due polls and pending result delivery without changing winners.
 - [ ] Normal operator instructions do not delete persistent volumes.
+- [ ] Card 11 setup and optional-image migration are verified; authenticated setup access works through both menu entry points.
 
 ## Verification
 

@@ -7,7 +7,7 @@ hyphenated `@ginraidee-bot-manage` spelling remain supported for compatibility.
 Voting closes at 12:00 noon, Thailand time.
 
 Planned stack: Python, FastAPI, SQLite, and Docker with persistent database
-storage. Restaurant images remain HTTPS source URLs. Local and server
+storage. Restaurant images are optional HTTPS source URLs. Local and server
 deployments will use `docker-compose.yml` and `docker-compose-prod.yml`
 respectively.
 
@@ -18,6 +18,11 @@ Card 02 (group restaurant catalogs and image URLs) is awaiting tester and
 manual LINE verification. Card 03 (restaurant editing and deletion) is in
 development under project-owner direction while Card 02 verification remains
 pending.
+
+The 2026-10-16 plan amendment adds menu/form setup and optional restaurant
+images in [Card 11](.scratch/ginraidee/issues/11-management-setup.md). This
+interface is planned; the current implementation still uses chat prompts and
+requires an image URL.
 
 ## Planning documents
 
@@ -49,7 +54,17 @@ The `ginraidee_data` named volume holds the SQLite database. `docker compose
 down` keeps it; do not use `docker compose down --volumes` when checking
 persistence. Stop the local bot with `docker compose down`.
 
-## Restaurant management
+## Planned restaurant management
+
+Send `@ginraidee-bot manage` in a group to open a menu card and its setup form.
+The bot's private-chat rich menu opens the same form. Add, view, edit, and delete
+restaurants using the form, without chat Q&A. Only the restaurant name is
+required; an HTTPS image URL is optional and can be added, replaced, or removed.
+Name-only restaurants remain eligible for selection and voting. Setup is scoped
+to the verified member and group, with Cancel, deletion confirmation, and
+10-minute inactivity expiry. See the [amended plan](docs/implementation-plan.md).
+
+## Current restaurant management (before Card 11)
 
 In a group, send `@ginraidee-bot manage` and choose `เพิ่ม` to add a restaurant,
 `รายการ` to view the catalog, `แก้ไข` to update a restaurant, or `ลบ` to delete

@@ -6,6 +6,12 @@
 **Owner:** Current Codex workspace, by project-owner direction
 **Developer/tester rounds used:** 1 / 3
 
+Scope amendment, 2026-10-16: [Card 11](11-management-setup.md) replaces chat
+prompts/typed numbers with menu/form setup and supports preserving, replacing,
+or removing an optional restaurant image. Tasks and evidence below describe
+the earlier implementation; the new UI and optional-image behavior still need
+implementation and verification. Existing rounds/manual gates remain in place.
+
 Project-owner direction on 2026-10-16 authorized Card 03 implementation to
 start while Card 02 still awaits tester verification and manual LINE UAT. This
 starts implementation only; it does not mark Card 02 Done or waive Card 03's

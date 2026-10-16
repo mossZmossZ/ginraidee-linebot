@@ -6,6 +6,12 @@
 **Owner:** Current Codex workspace
 **Developer/tester rounds used:** 1 / 3
 
+Scope amendment, 2026-10-16: the target now uses menu/form setup with optional
+images. [Card 11](11-management-setup.md) replaces the implemented guided chat
+UI and migrates images to optional values. The checked tasks and evidence
+below record the earlier implementation; they do not verify the new behavior.
+Card 11 is required before production acceptance, alongside the checks here.
+
 ## What to build
 
 Any group member adds a restaurant through the guided chat flow and sees its name and original HTTPS image URL in that group's list.

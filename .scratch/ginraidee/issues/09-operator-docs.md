@@ -14,6 +14,7 @@ Another operator can obtain the repo, supply their own agreed configuration, run
 
 - [ ] Write the local/server quickstarts and LINE account/group/webhook configuration steps.
 - [ ] Document environment variables, external image URL requirements, persistence, backups and delivery failures.
+- [ ] Document group menu-card/private rich-menu setup, LIFF/LINE Login under the same provider, static menu artwork, desktop setup link, optional restaurant images, and image removal.
 - [ ] Add contribution/test instructions and a CI check plan/configuration for the chosen tools.
 - [ ] Record the accepted license/distribution policy and known limitations.
 

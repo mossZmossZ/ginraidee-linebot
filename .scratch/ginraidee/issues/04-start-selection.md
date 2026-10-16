@@ -15,6 +15,7 @@ Before noon, @ginraidee-bot selects two distinct eligible restaurants and opens 
 - [ ] Implement Bangkok lunch-date/deadline calculations with an injectable clock.
 - [ ] Select uniformly without replacement and save immutable choices.
 - [ ] Render voting buttons and reuse the existing open poll.
+- [ ] Render name-only and mixed-image choices; omit image components when absent (D9/Card 11).
 - [ ] Implement accepted empty-list, daily-selection and post-noon rules.
 
 ## Acceptance criteria
@@ -26,6 +27,7 @@ Before noon, @ginraidee-bot selects two distinct eligible restaurants and opens 
 - [ ] At or after 12:00 Asia/Bangkok, show today's result or the closed message; never open a new poll.
 - [ ] Empty catalogs, repeated days and single-restaurant daily results follow accepted D1.
 - [ ] Choice names/images remain stable independently of later catalog updates.
+- [ ] Missing images never block selection; snapshots preserve absence, and name-only choices/results have valid LINE payloads.
 
 ## Verification
 

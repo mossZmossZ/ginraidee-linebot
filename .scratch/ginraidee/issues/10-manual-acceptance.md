@@ -21,6 +21,7 @@ Tester, tech lead and CEO have a concrete release report with real LINE group ev
 
 - [ ] Required UAT scenarios have actual results, environment/revision, tester identity and evidence.
 - [ ] Manual results cover two users/groups, management, selection, changed votes, noon closure and persistence/recovery.
+- [ ] Card 11/D9 checks cover group-card/private-rich-menu form access, authorization, optional images/removal, and migration (U25–U27).
 - [ ] No unrun/failed required check is marked Pass or Done.
 - [ ] All held bugs show affected cards, rounds used, reproduction and continuation steps.
 - [ ] Tech lead reports delivered behavior, evidence and risks to CEO.

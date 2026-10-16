@@ -13,6 +13,7 @@ The complete deployed candidate preserves correct group behavior under simultane
 ## Todo
 
 - [ ] Exercise cross-feature scenarios with two groups and overlapping management sessions.
+- [ ] Qualify both menu/form entry points, setup authorization, copied/expired links, name-only/mixed-image catalogs, and image removal under D9.
 - [ ] Verify concurrent starts/votes, webhook deduplication and out-of-order rules.
 - [ ] Inject crashes and image/LINE failures; verify durable work recovery.
 - [ ] Fix findings only within the developer/tester round limit and record remaining defects.
@@ -22,7 +23,7 @@ The complete deployed candidate preserves correct group behavior under simultane
 - [ ] Group A cannot read/mutate Group B's catalog, sessions, poll choices or votes through copied action data.
 - [ ] Repeated event delivery does not duplicate saves, polls, votes or logical closing outcomes.
 - [ ] Crash after webhook acceptance does not silently lose acknowledged durable work.
-- [ ] Image destination/redirect protections and file-serving boundaries hold in the deployed candidate.
+- [ ] Supplied image URLs require valid HTTPS; the bot never fetches source images. Absent images omit image components, and setup/API authorization holds in the deployed candidate.
 - [ ] Catalog edits during polls and image retention follow reviewed policies without broken snapshots.
 - [ ] Delivery failures, due-poll recovery and exact noon boundaries pass meaningful regression checks.
 - [ ] Findings include reproduction and evidence; any third-round failure becomes Pending with a linked Bug.

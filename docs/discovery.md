@@ -72,24 +72,34 @@ implementation after the user confirms the shared understanding and scope.
 - If nobody votes by the deadline, the bot randomly chooses one of the two
   restaurants and announces that nobody voted.
 - Invoke `@ginraidee-bot manage` to add, edit, and delete restaurant entries.
-- Each entry represents a restaurant (a place to eat), with a restaurant name
-  and an image source. The earlier phrase `menu name` means the restaurant's
+- Each entry represents a restaurant (a place to eat), with a required restaurant
+  name and an optional image source. The earlier phrase `menu name` means the restaurant's
   name; a separate dish catalog is not required.
-- Restaurant images are provided as pasted HTTPS image URLs in the first
+- When supplied, restaurant images are provided as pasted HTTPS image URLs in the first
   release. Uploading photos in LINE is outside the confirmed first-release scope.
 - Each LINE group has its own separate catalog. `@ginraidee-bot manage` changes
   only that group's entries, and `@ginraidee-bot` selects only from that group's catalog.
 - Every member of a group may use `@ginraidee-bot manage` to add, edit, or delete that
   group's entries. Designated manager restrictions are not required.
-- `@ginraidee-bot manage` opens a guided flow inside the LINE group chat, with Add,
-  Edit, and Delete buttons and prompts for restaurant names and image URLs.
-  No separate management website is required for the first release. Replies
-  to management prompts belong to that flow and do not start lunch polls.
+- Updated by the project owner on 2026-10-16: `@ginraidee-bot manage` opens a
+  group menu card linking to a setup form. A native rich menu in the bot's
+  private chat opens the same setup UI. List, Add, Edit, and Delete use buttons
+  and forms rather than a sequence of chat questions and replies. The owner
+  explicitly selected both entry points. Host this small UI with FastAPI;
+  no separate management service is required. Setup never starts lunch polls.
+- Add/Edit requires a name only. An HTTPS image URL may be added, preserved,
+  replaced, or explicitly removed; name-only restaurants work in lists,
+  selection, voting, and results without a placeholder image.
+- Setup access stays scoped to a verified member and group. Obtain group
+  context from signed bot webhooks and verify LINE identity on the server;
+  copied links or client-supplied group IDs do not grant access. Preserve
+  Cancel, 10-minute inactivity expiry, deletion confirmation, and stale-edit
+  protection. See [Card 11](../.scratch/ginraidee/issues/11-management-setup.md).
 
 ### Confirmed restaurant image URL behavior
 
 The project owner changed the image decision on 2026-10-16: restaurant records
-retain only the HTTPS image URL supplied by a group member. The bot sends that
+require no image. If supplied, retain only the HTTPS image URL from a group member. The bot sends that
 same URL to LINE; it does not download, validate image bytes, or store a copy
 on a Docker volume. Direct photo uploads remain outside the first-release scope.
 
@@ -171,6 +181,7 @@ hostname remains deferred to card 07 and does not block local development.
 | Empty catalog and daily selection | Show an add-restaurants prompt for an empty catalog; create one final selection per group per Bangkok day (including a sole restaurant); allow restaurants to repeat on later days. |
 | Poll completion and catalog changes | Automatically announce the result at noon for an `@ginraidee-bot` poll; retain original restaurant names and images in poll snapshots after catalog edits/deletions. |
 | Management flow | Use separate sessions per group member, Cancel, 10-minute inactivity expiry, deletion confirmation, and Thai first-release message text. |
+| Management/image amendment (D9, 2026-10-16) | Group menu card and private-chat rich menu open the same setup form; replace chat Q&A. Restaurant name required, HTTPS image URL optional, explicit image removal supported. Native rich-menu artwork remains a separate UI asset. |
 | Distribution and hosting | Operators deploy independently with their own credentials; the repository is MIT licensed. The project owner chooses the server domain and HTTPS setup before production deployment. |
 | Development roles | The project owner is CEO and manual LINE-UAT owner. The current Codex chat is tech lead until handoff; a separate `terra`, high chat performs development and testing. |
 | Cards and defect loop | Use repository Markdown cards with acceptance criteria; one loop is implementation/fix plus verification; maximum three rounds; remaining defects become linked Pending/Bug work and hold dependencies/releases unless the project owner approves reduced scope. |

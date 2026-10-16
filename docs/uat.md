@@ -5,7 +5,8 @@ Status: Planned; no checks have been executed.
 Use this with card 10 and record the tester, CEO/tech-lead reviewer, environment,
 revision, Bangkok date/time, actual result and evidence for each scenario.
 Mark a row N/A only with an explicit scope decision. The D1–D8 decisions in
-the implementation plan govern the related test behaviors.
+the implementation plan, plus the D9 management/image amendment, govern the
+related test behaviors.
 
 ## Prerequisites
 
@@ -13,7 +14,8 @@ the implementation plan govern the related test behaviors.
   HTTPS webhook endpoint.
 - Two test groups and at least two human test users; configured credentials
   remain outside the repo.
-- A running candidate Docker deployment with seeded test restaurants/images.
+- A running candidate Docker deployment with name-only and imaged restaurants,
+  configured LIFF/LINE Login, and the private-chat rich menu.
 - A controlled test clock for repeatable boundary tests in isolation; also
   validate actual noon closure in a real group before production acceptance.
   Do not expose a clock-changing endpoint in production.
@@ -24,10 +26,10 @@ the implementation plan govern the related test behaviors.
 | --- | --- | --- | --- |
 | U01 | Start local Compose from documented setup | Bot becomes healthy; missing configuration is clearly reported. | Not run |
 | U02 | Send ordinary group text | No lunch selection starts. | Not run |
-| U03 | Use `@ginraidee-bot manage` to add a name and HTTPS image URL | LINE displays the original URL; the entry and exact URL remain after container replacement. | Not run |
+| U03 | Use `@ginraidee-bot manage`, open the menu card's form, and add a name with an optional HTTPS image URL | No chat Q&A; name-only entry saves, supplied URL is retained exactly, and records survive container replacement. | Not run |
 | U04 | Repeat U03 with another group member | That member can manage the same group's catalog. | Not run |
-| U05 | Edit an entry and confirm a deletion | Correct entry changes; other entries and groups remain intact. | Not run |
-| U06 | Start `@ginraidee-bot` before noon with at least two entries | Two distinct choices from this group's list appear with images and vote buttons. | Not run |
+| U05 | Use form buttons to edit an entry, preserve/replace/remove its image, cancel, and confirm a deletion | Correct entry changes only after Save/confirmation; Cancel preserves it, and other entries/groups remain intact. | Not run |
+| U06 | Start `@ginraidee-bot` before noon with at least two entries, including one without an image | Two distinct choices appear with names and vote buttons; images appear only where supplied. | Not run |
 | U07 | Repeat `@ginraidee-bot` during the open poll | Same choices and deadline; votes are preserved. | Not run |
 | U08 | Two users vote, one changes choice, then repeatedly taps | One current vote per user; totals reflect the changed choice without duplicate counting. | Not run |
 | U09 | Reach noon with a clear majority | Voting closes and the majority result is stored; announcement follows the accepted D2 policy. | Not run |
@@ -46,6 +48,9 @@ the implementation plan govern the related test behaviors.
 | U22 | Start the production Compose file independently | No development-file dependency; HTTPS endpoint and health checks work. | Not run |
 | U23 | Recreate app container, then back up and restore in an isolated test deployment | SQLite records and retained source URLs survive and remain consistent. | Not run |
 | U24 | Follow setup as a fresh operator | Instructions and agreed license/distribution policy support the intended use. | Not run |
+| U25 | Open the private-chat rich menu on mobile, then use the setup link on desktop | Same setup UI as the group menu card; select only a verified group context, or receive instructions to run manage in a group. | Not run |
+| U26 | Copy/modify a setup link, use another identity, expire a session, or lose group membership | No unauthorized catalog access or writes; expired/unverifiable access requires fresh authorized setup. | Not run |
+| U27 | Migrate an existing database, then use name-only and mixed-image catalogs in lists, a sole-restaurant result, polls, and final results | Existing URLs and snapshots survive; absent images never produce invalid LINE image components or block selection/voting. | Not run |
 
 ## Automated evidence to review
 
@@ -57,6 +62,8 @@ the implementation plan govern the related test behaviors.
 - [ ] Duplicate/out-of-order delivery, invalid URL input, cross-group
   actions and crash recovery have meaningful regression coverage.
 - [ ] Both Compose files validate and persistence checks pass.
+- [ ] Form identity/group authorization, stale edits, double submissions,
+  nullable-image migration, and name-only rendering pass.
 
 ## Release disposition
 
