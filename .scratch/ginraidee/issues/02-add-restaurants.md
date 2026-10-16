@@ -1,4 +1,4 @@
-# 02 — Add and view group restaurants with persistent images
+# 02 — Add and view group restaurants with HTTPS image URLs
 
 **Phase:** P1
 **Status:** In development
@@ -8,27 +8,26 @@
 
 ## What to build
 
-Any group member adds a restaurant through the guided chat flow and sees its name and backend-hosted image in that group's list.
+Any group member adds a restaurant through the guided chat flow and sees its name and original HTTPS image URL in that group's list.
 
 ## Todo
 
 - [x] Implement guided Add and list/preview interactions with per-user/group sessions.
-- [x] Fetch and validate supplied HTTPS image URLs with bounded safe network access.
-- [x] Store image files and restaurant records consistently on persistent storage.
-- [x] Serve only validated image files through the public image endpoint.
+- [x] Validate and retain supplied HTTPS image URLs without downloading them.
+- [x] Store restaurant records and original image URLs consistently in SQLite.
+- [x] Send original HTTPS image URLs directly to LINE in catalog previews.
 
 ## Acceptance criteria
 
 - [ ] A group member can provide a nonblank restaurant name and HTTPS image URL and see the saved entry.
 - [ ] Other members of that group can see the entry; another group cannot see or change it.
-- [ ] Downloaded images are served from the backend and remain available after application container replacement.
-- [ ] Validation failures, oversized content, private/local destinations and unsafe redirect chains do not create a partial entry or unsafe file.
+- [ ] Original HTTPS image URLs are retained after application container replacement and sent directly to LINE.
+- [ ] Invalid or non-HTTPS URLs do not create a partial entry.
 - [ ] Canceled/expired sessions and simultaneous users behave according to accepted D3 rules.
-- [ ] The database file and unrelated files cannot be retrieved through image serving.
 
 ## Verification
 
-Guided webhook flow with fake image responses, independent group/user sessions, URL/redirect validation and container replacement persistence.
+Guided webhook flow with HTTPS image URLs, independent group/user sessions, URL validation, and container replacement persistence.
 
 Manual check: Two members add restaurants in a real group, view the images, and verify a second group stays separate.
 
@@ -36,24 +35,23 @@ Manual check: Two members add restaurants in a real group, view the images, and 
 
 Developer environment: current Codex workspace, Python 3.12.13 via `uv`.
 
-Implemented the Thai guided Add/List flow, scoped management sessions, normalized
-backend-hosted PNG files, opaque image serving, HTTPS-only image retrieval with
-DNS/redirect/private-address checks, and per-group normalized-name uniqueness.
+Implemented the Thai guided Add/List flow, scoped management sessions, retained
+original HTTPS image URLs in SQLite, direct LINE image messages, and per-group
+normalized-name uniqueness.
 
 Focused checks run:
 
-- `uv run --group dev pytest -q` — 19 passed.
+- `uv run --group dev pytest -q` — 15 passed (one upstream Starlette deprecation warning).
 - `uv run --group dev ruff check .` — passed.
-- Isolated Docker Compose smoke check — image built; container became healthy;
-  `/data/ginraidee.db` remained present after `docker compose restart bot`.
-  The temporary container and network were stopped; its named volume was kept.
+- `docker compose config` with placeholder credentials — passed.
+- `docker compose build` — passed; the resulting image does not install Pillow.
 
 Manual check: not run; requires two real group members, a configured public HTTPS
 endpoint, and the project owner's LINE credentials.
 
 | Round | Developer submission / checks | Tester result | Findings / next action |
 | --- | --- | --- | --- |
-| 1 | Guided flow, image-safety controls, storage, endpoint, durable receipts, and recoverable orphan handling implemented; checks recorded above | Not run | Await independent tester verification and required real LINE check. |
+| 1 | Guided flow, malformed/HTTP URL rejection, paginated catalog previews, SQLite URL storage, direct LINE image messages, and durable receipts implemented; automated checks recorded above | Not run | Await independent tester verification and required real LINE check. |
 
 Tech-lead review: Not recorded.
 CEO/manual disposition: Not recorded.

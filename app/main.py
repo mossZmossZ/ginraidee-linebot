@@ -7,12 +7,10 @@ import json
 from typing import Any, Callable
 
 from fastapi import FastAPI, HTTPException, Request, Response, status
-from fastapi.responses import FileResponse
 
 from app.commands import CommandHandler
 from app.config import Settings
 from app.database import Database, ManagementWork, WebhookWork
-from app.images import ImageFetcher, image_path, recover_unreferenced_images
 from app.security import has_valid_line_signature
 from app.transport import LineReplyTransport, NonRetryableReplyError, ReplyTransport
 
@@ -20,24 +18,18 @@ from app.transport import LineReplyTransport, NonRetryableReplyError, ReplyTrans
 def create_app(
     settings: Settings | None = None,
     transport: ReplyTransport | None = None,
-    image_fetcher: ImageFetcher | None = None,
     clock: Callable[[], datetime] | None = None,
 ) -> FastAPI:
     resolved_settings = settings or Settings.from_environment()
     database = Database(resolved_settings.database_path, clock=clock)
-    image_directory = resolved_settings.image_directory or resolved_settings.database_path.parent / "images"
     command_handler = CommandHandler(
         database,
         transport or LineReplyTransport(resolved_settings.channel_access_token),
-        image_fetcher=image_fetcher,
-        image_directory=image_directory,
-        public_base_url=resolved_settings.public_base_url,
     )
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         database.initialize()
-        recover_unreferenced_images(image_directory, database.referenced_image_ids())
         for work in database.resume_webhook_work():
             await _process_work(work, database, command_handler)
         for work in database.resume_management_work():
@@ -49,13 +41,6 @@ def create_app(
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
         return {"status": "ok"}
-
-    @app.get("/images/{image_id}")
-    async def served_image(image_id: str) -> FileResponse:
-        path = image_path(image_directory, image_id)
-        if path is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
-        return FileResponse(path, media_type="image/png")
 
     @app.post("/callback", status_code=status.HTTP_200_OK)
     async def callback(request: Request) -> Response:

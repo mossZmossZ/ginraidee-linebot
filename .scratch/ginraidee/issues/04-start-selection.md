@@ -2,7 +2,7 @@
 
 **Phase:** P2
 **Status:** Todo
-**Blocked by:** [02 — Add and view group restaurants with persistent images](02-add-restaurants.md)
+**Blocked by:** [02 — Add and view group restaurants with HTTPS image URLs](02-add-restaurants.md)
 **Owner:** Separate `terra`, high chat when the card is Ready
 **Developer/tester rounds used:** 0 / 3
 

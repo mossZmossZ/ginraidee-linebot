@@ -13,7 +13,7 @@ Another operator can obtain the repo, supply their own agreed configuration, run
 ## Todo
 
 - [ ] Write the local/server quickstarts and LINE account/group/webhook configuration steps.
-- [ ] Document environment variables, image hosting, persistence, backups and delivery failures.
+- [ ] Document environment variables, external image URL requirements, persistence, backups and delivery failures.
 - [ ] Add contribution/test instructions and a CI check plan/configuration for the chosen tools.
 - [ ] Record the accepted license/distribution policy and known limitations.
 
@@ -21,7 +21,7 @@ Another operator can obtain the repo, supply their own agreed configuration, run
 
 - [ ] A fresh operator can follow the appropriate local and production setup without hidden credentials or dependencies.
 - [ ] Both required Compose filenames, volume behavior and public HTTPS requirements are documented correctly.
-- [ ] Configuration examples contain placeholders only; no tokens, database files or downloaded user images are committed.
+- [ ] Configuration examples contain placeholders only; no tokens or database files are committed.
 - [ ] Contributors can run the agreed focused test/lint/configuration checks using pinned dependencies.
 - [ ] License text is added only after its selection; public release remains held while the license is undecided.
 - [ ] Known limitations and Pending bugs are discoverable and not described as passing features.

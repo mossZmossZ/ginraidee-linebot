@@ -2,7 +2,7 @@
 
 **Phase:** P1
 **Status:** Todo
-**Blocked by:** [02 — Add and view group restaurants with persistent images](02-add-restaurants.md)
+**Blocked by:** [02 — Add and view group restaurants with HTTPS image URLs](02-add-restaurants.md)
 **Owner:** Separate `terra`, high chat when the card is Ready
 **Developer/tester rounds used:** 0 / 3
 
@@ -15,20 +15,19 @@ Any member edits a selected restaurant's name/image or confirms its deletion thr
 - [ ] Add clear entry selection for Edit and Delete.
 - [ ] Implement validated edits and accepted deletion-confirmation behavior.
 - [ ] Handle concurrent changes and canceled/expired sessions safely.
-- [ ] Preserve image references according to accepted retention/snapshot decisions.
+- [ ] Preserve image URLs according to accepted retention/snapshot decisions.
 
 ## Acceptance criteria
 
 - [ ] Any member can edit the intended restaurant or confirm deleting it.
-- [ ] A changed image is downloaded, validated, stored and displayed using the same protections as Add.
+- [ ] A changed HTTPS image URL is retained and sent directly to LINE using the same validation as Add.
 - [ ] Cancel leaves the entry unchanged; a stale selection never edits/deletes the wrong entry.
 - [ ] Another group's restaurant cannot be mutated by copied or forged action data.
 - [ ] Changing/deleting a restaurant does not corrupt existing poll-choice snapshots under accepted D2.
-- [ ] Cleanup does not remove images still needed by retained restaurants/polls.
 
 ## Verification
 
-End-to-end management edit/delete fixtures, overlapping sessions, stale versions, group scoping and image reference checks.
+End-to-end management edit/delete fixtures, overlapping sessions, stale versions, group scoping and image URL checks.
 
 Manual check: Two group members exercise Edit, Cancel and Delete, then verify the resulting catalog and images.
 

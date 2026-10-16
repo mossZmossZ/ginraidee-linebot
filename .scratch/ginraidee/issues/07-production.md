@@ -13,17 +13,17 @@ An operator starts the full bot using only docker-compose-prod.yml and runtime c
 ## Todo
 
 - [ ] Create the standalone server Compose configuration and safe container runtime settings.
-- [ ] Configure the agreed public HTTPS webhook/image endpoint and health checks.
+- [ ] Configure the agreed public HTTPS webhook endpoint and health checks.
 - [ ] Document and verify single-worker/closer deployment constraints and startup recovery.
-- [ ] Add a consistent SQLite-plus-images backup/restore procedure.
+- [ ] Add a consistent SQLite backup/restore procedure.
 
 ## Acceptance criteria
 
 - [ ] The production Compose configuration runs independently of the development Compose file.
-- [ ] Configured public HTTPS webhook and image URLs work from outside the server.
-- [ ] Database and images survive app container replacement and ordinary restart.
+- [ ] The configured public HTTPS webhook works from outside the server.
+- [ ] Database records and retained source URLs survive app container replacement and ordinary restart.
 - [ ] Only intended public routes are exposed; runtime secrets stay outside the image/repo.
-- [ ] A backup restores consistent restaurant records, polls/votes and referenced images in an isolated deployment.
+- [ ] A backup restores consistent restaurant records, polls/votes and retained source URLs in an isolated deployment.
 - [ ] Restart recovers due polls and pending result delivery without changing winners.
 - [ ] Normal operator instructions do not delete persistent volumes.
 

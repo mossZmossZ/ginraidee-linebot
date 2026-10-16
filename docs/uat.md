@@ -10,7 +10,7 @@ the implementation plan govern the related test behaviors.
 ## Prerequisites
 
 - A test LINE Official Account with group joining enabled and a valid public
-  HTTPS webhook/image endpoint.
+  HTTPS webhook endpoint.
 - Two test groups and at least two human test users; configured credentials
   remain outside the repo.
 - A running candidate Docker deployment with seeded test restaurants/images.
@@ -24,7 +24,7 @@ the implementation plan govern the related test behaviors.
 | --- | --- | --- | --- |
 | U01 | Start local Compose from documented setup | Bot becomes healthy; missing configuration is clearly reported. | Not run |
 | U02 | Send ordinary group text | No lunch selection starts. | Not run |
-| U03 | Use `@ginrai-manage` to add a name and HTTPS image URL | Restaurant preview and stored image appear; entry remains after container replacement. | Not run |
+| U03 | Use `@ginrai-manage` to add a name and HTTPS image URL | LINE displays the original URL; the entry and exact URL remain after container replacement. | Not run |
 | U04 | Repeat U03 with another group member | That member can manage the same group's catalog. | Not run |
 | U05 | Edit an entry and confirm a deletion | Correct entry changes; other entries and groups remain intact. | Not run |
 | U06 | Start `@ginrai` before noon with at least two entries | Two distinct choices from this group's list appear with images and vote buttons. | Not run |
@@ -40,11 +40,11 @@ the implementation plan govern the related test behaviors.
 | U16 | Use two groups and reuse an old/foreign action | Catalogs, management sessions, votes and outcomes remain scoped to the correct group/poll. | Not run |
 | U17 | Two users manage entries at once, then cancel/let a session expire | Follow accepted D3 policy; no mixed-up names, images, or deletions. | Not run |
 | U18 | Edit/delete a restaurant during an open poll | Follow accepted D2 policy; active votes retain stable choices and images. | Not run |
-| U19 | Submit invalid, oversized, unreachable, or private-network image URLs | Clear bounded failure; no private fetch, unsafe file, or half-saved entry. | Not run |
+| U19 | Submit invalid, non-HTTPS, malformed, unreachable, or expired image URLs | Invalid/non-HTTPS input is rejected without a partial entry; valid but later-unavailable sources are an external source-host limitation. | Not run |
 | U20 | Restart around the deadline and simulate a LINE delivery failure | Due poll closes once logically; winner survives restart; delivery retry/failed status is visible. | Not run |
 | U21 | Replay the same signed webhook and send simultaneous poll/vote actions | No duplicate poll or vote, no repeated mutation from duplicate events. | Not run |
 | U22 | Start the production Compose file independently | No development-file dependency; HTTPS endpoint and health checks work. | Not run |
-| U23 | Recreate app container, then back up and restore in an isolated test deployment | SQLite records and referenced images survive and remain consistent. | Not run |
+| U23 | Recreate app container, then back up and restore in an isolated test deployment | SQLite records and retained source URLs survive and remain consistent. | Not run |
 | U24 | Follow setup as a fresh operator | Instructions and agreed license/distribution policy support the intended use. | Not run |
 
 ## Automated evidence to review
@@ -54,7 +54,7 @@ the implementation plan govern the related test behaviors.
 - [ ] Exact noon boundaries and Bangkok calendar rollover pass with a fake clock.
 - [ ] Random choice uses uniform distinct sampling; deterministic tests avoid
   asserting statistically flaky output sequences.
-- [ ] Duplicate/out-of-order delivery, image fetch failures, cross-group
+- [ ] Duplicate/out-of-order delivery, invalid URL input, cross-group
   actions and crash recovery have meaningful regression coverage.
 - [ ] Both Compose files validate and persistence checks pass.
 

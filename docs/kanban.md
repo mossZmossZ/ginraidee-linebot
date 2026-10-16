@@ -24,7 +24,7 @@ project owner. Card 02 has not yet passed its verification and manual gates.
 | --- | --- | --- | --- | --- | --- |
 | [00](../.scratch/ginraidee/issues/00-review-plan.md) | P0 | Confirm scope, defaults, people/models, workflow | None | Done | Project owner + current Codex chat |
 | [01](../.scratch/ginraidee/issues/01-local-bot.md) | P1 | Local bot receives signed commands | 00 | Done | Current Codex workspace |
-| [02](../.scratch/ginraidee/issues/02-add-restaurants.md) | P1 | Add/view restaurants and host persistent images | 01 | In development | Current Codex workspace |
+| [02](../.scratch/ginraidee/issues/02-add-restaurants.md) | P1 | Add/view restaurants and retain image URLs | 01 | In development | Current Codex workspace |
 | [03](../.scratch/ginraidee/issues/03-edit-delete.md) | P1 | Edit/delete restaurants through group management | 02 | Todo | Developer |
 | [04](../.scratch/ginraidee/issues/04-start-selection.md) | P2 | Start or reuse a lunch selection | 02 | Todo | Developer |
 | [05](../.scratch/ginraidee/issues/05-vote.md) | P2 | Cast/change one vote per person | 04 | Todo | Developer |

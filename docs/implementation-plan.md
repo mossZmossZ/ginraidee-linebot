@@ -9,7 +9,8 @@ operating decisions approved in card 00.
 
 A Python/FastAPI LINE group bot, packaged with Docker, that manages each
 group's restaurant list and selects lunch using a custom two-choice vote.
-SQLite and downloaded images persist on Docker volumes. Local development
+SQLite persists on Docker volumes. Restaurant records retain their source image
+URLs without downloading image files. Local development
 uses `docker-compose.yml`; the server uses one standalone
 `docker-compose-prod.yml`, without requiring a development override file.
 
@@ -26,7 +27,7 @@ uses `docker-compose.yml`; the server uses one standalone
 | Tie or no votes | Select randomly between the poll's choices and explain the fallback. |
 | Typed `@ginrai` at or after noon | Show today's result, or explain voting is closed if there is no result. |
 | Typed `@ginrai-manage` | Guided Add/Edit/Delete flow inside the group; all group members may use it. |
-| Restaurant image input | Accept an HTTPS image URL; backend downloads, validates, stores, and serves the image. |
+| Restaurant image input | Accept and retain an HTTPS image URL; send that original URL to LINE. |
 | Another group uses the bot | Keep catalogs, polls, votes, and management operations separate. |
 
 Actual mention-list support, native LINE polls, a management website, direct
@@ -48,7 +49,7 @@ production release gate.
 | D4 | Deployment and license | Each operator deploys independently with its own LINE credentials. Use the MIT License for the repository. The project owner chooses the public hostname and HTTPS termination approach before card 07 is accepted; this does not block local development. |
 | D5 | People and models | The project owner is the CEO and owns final scope/release decisions and real LINE UAT. A separate Codex chat using `terra` with high reasoning performs the developer and tester roles. The current Codex chat is tech lead until handoff; each card records the actual execution environment. |
 | D6 | Workflow and release gate | Use repository Markdown cards. One round is developer implementation/fix followed by tester verification. Maximum three rounds per card. After a failed third round, create a linked Bug and set the card Pending. Required acceptance failures hold dependent work and release unless the project owner explicitly accepts a reduced scope. |
-| D7 | Data and image lifecycle | Store only necessary group/user identifiers, never chat transcripts. Retain completed poll and delivery records for 90 days, then safely delete them. Keep images referenced by current restaurants or retained poll snapshots; remove unreferenced files through a recoverable cleanup process. Backups preserve the SQLite database and referenced image files together. |
+| D7 | Data lifecycle | Store only necessary group/user identifiers and restaurant image URLs, never chat transcripts. Retain completed poll and delivery records for 90 days, then safely delete them. Backups preserve the SQLite database. Source image hosts control image-file retention. |
 | D8 | Late, duplicate, and out-of-order webhooks | Verify signatures and persist a stable event identifier before effects. Duplicate identifiers produce no additional effects. Apply commands and votes by authoritative server processing time, not a client/event timestamp; at or after a poll deadline, reject writes even if the event was generated earlier. Existing poll/session version checks and database constraints govern otherwise out-of-order events. |
 
 ## Implementation architecture
@@ -62,12 +63,8 @@ flowchart LR
     LINE -->|Signed HTTPS webhooks| App[FastAPI bot]
     App -->|Replies and result push messages| LINE
     App --> DB[(SQLite on persistent volume)]
-    App --> Images[Image files on persistent volume]
-    App --> Fetch[Bounded image downloader]
     Closing[Due-poll closure task] --> DB
     Closing --> App
-    Images --> Public[Public HTTPS image endpoint]
-    LINE --> Public
 ```
 
 - Keep webhook parsing/LINE transport separate from restaurant, poll, and vote
@@ -94,25 +91,16 @@ flowchart LR
 - Use an OS-backed random generator for uniform sampling without replacement;
   do not weight restaurants. Deterministic fake randomness belongs only in
   tests.
-- Use generated image IDs rather than user-supplied filenames. Validate URLs,
-  resolved destinations and redirects to reject private/local network access;
-  bound time, bytes, redirects, and decoded dimensions. Accept JPEG/PNG input,
-  limit downloads to 5 MB, time out after 10 seconds, and allow at most three
-  redirects.
-  Validate actual decoded images and strip embedded metadata when re-encoding.
-- Store images as files and their references in SQLite. Never expose the
-  database or the whole data directory through static hosting. Publish only
-  the image endpoint, using opaque names, rather than a catalog API.
-- Keep database writes short and image downloads outside write transactions.
-  Use atomic file writes and a recoverable cleanup policy for interrupted saves.
-  Design backup/restore to preserve both SQLite and referenced image files.
+- Accept only well-formed HTTPS image URLs. The bot does not fetch source URLs
+  or host image bytes; LINE retrieves the URL directly from its source host.
+- Keep database writes short. Backups and restores preserve the SQLite database.
 
 ## Data model
 
 | Record | Purpose and constraints |
 | --- | --- |
 | Group | LINE group identifier and relevant bot membership state. |
-| Restaurant | Group owner, display name, source URL, stored image reference, timestamps. |
+| Restaurant | Group owner, display name, HTTPS image URL, timestamps. |
 | Management session | Group/user scope, current step, draft input, expiry, concurrency/version state. |
 | Poll | Group, lunch date, state, deadline, chosen result and reason; uniqueness according to D1. |
 | Poll choice | Immutable restaurant name/image snapshot tied to its poll. |
@@ -131,7 +119,7 @@ All task details and dependencies are in the [Kanban board](kanban.md).
 | Phase | Cards | Expected demonstration / exit condition |
 | --- | --- | --- |
 | P0 — Review | 00 | Completed: operating decisions, responsibilities, and workflow approved. |
-| P1 — Bot and catalog | 01–03 | Start locally; process a signed group command; add, view, edit, and delete group restaurants with persistent images. |
+| P1 — Bot and catalog | 01–03 | Start locally; process a signed group command; add, view, edit, and delete group restaurants with HTTPS image URLs. |
 | P2 — Selection and voting | 04–05 | Select eligible choices, handle one restaurant, reuse an open poll, cast and change votes safely. |
 | P3 — Noon completion | 06 | Close at Bangkok noon, resolve normal/tie/no-vote outcomes, recover after restart, and deliver a stable result. |
 | P4 — Deployment and qualification | 07–09 | Run the standalone production Compose setup, verify isolation/recovery, and give another operator complete setup documentation. |
@@ -151,13 +139,13 @@ are no date or completion-time commitments yet.
 ## Validation and completion
 
 Use pytest for meaningful rule/integration tests, signed webhook fixtures,
-temporary SQLite databases, isolated image storage, a controlled clock, and a
-fake LINE transport. Mock external image fetches for automated tests; reserve
-real LINE group checks for manual UAT. Avoid flaky statistical randomness tests:
+temporary SQLite databases, a controlled clock, and a fake LINE transport.
+Use HTTPS URL fixtures and reserve real LINE group checks for manual UAT. Avoid
+flaky statistical randomness tests:
 verify sampling inputs, distinct choices, and fallback behavior deterministically.
 
 Check concurrency, duplicate events, vote updates near noon, stale buttons,
-isolation between two groups, hostile/broken image URLs, restart during closure,
+isolation between two groups, invalid/non-HTTPS image URLs, restart during closure,
 and failed outgoing delivery. Validate both Compose configurations and verify
 data survives application container replacement. Do not use volume-deleting
 commands during persistence acceptance checks.

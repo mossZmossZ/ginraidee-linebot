@@ -85,24 +85,16 @@ implementation after the user confirms the shared understanding and scope.
   No separate management website is required for the first release. Replies
   to management prompts belong to that flow and do not start lunch polls.
 
-### Confirmed backend image storage
+### Confirmed restaurant image URL behavior
 
-The user accepted backend-hosted copies of restaurant images:
-
-1. A group member provides the restaurant's HTTPS image URL.
-2. The backend downloads and validates the image.
-3. The image is stored on a persistent Docker volume so replacing or restarting
-   the application container does not discard it.
-4. The backend serves the stored image at a publicly accessible HTTPS URL for
-   LINE to display. The source URL can be retained as metadata.
+The project owner changed the image decision on 2026-10-16: restaurant records
+retain only the HTTPS image URL supplied by a group member. The bot sends that
+same URL to LINE; it does not download, validate image bytes, or store a copy
+on a Docker volume. Direct photo uploads remain outside the first-release scope.
 
 The [LINE image message requirements](https://developers.line.biz/en/reference/messaging-api/#image-message)
-specify HTTPS image URLs. The backend therefore needs a publicly reachable
-HTTPS image endpoint; a private filesystem path alone is insufficient.
-Image validation, download limits, protection against fetching private network
-addresses, and image cleanup/retention will need to be defined before implementation.
-This design preserves URL input; direct photo uploads remain outside the
-confirmed first-release scope.
+still require HTTPS image URLs. Source hosts remain responsible for availability
+and may change, expire, or block an image after it is saved.
 
 ### Reference and platform findings (2026-10-15)
 
@@ -130,8 +122,8 @@ hostname and HTTPS termination approach before production deployment.
 - Package and run the application with Docker.
 - Use SQLite for restaurant records, polls, and votes, within the user's
   authorization to use SQLite for persistence. Store the database file on a
-  persistent Docker volume. Store downloaded images as files on persistent
-  Docker storage, with their references in SQLite.
+  persistent Docker volume; restaurant records retain their original HTTPS
+  image URLs, not image files.
 - Local development configuration: `docker-compose.yml`.
 - Server configuration: a single `docker-compose-prod.yml`.
 
@@ -183,8 +175,8 @@ hostname remains deferred to card 07 and does not block local development.
 | Cards and defect loop | Use repository Markdown cards with acceptance criteria; one loop is implementation/fix plus verification; maximum three rounds; remaining defects become linked Pending/Bug work and hold dependencies/releases unless the project owner approves reduced scope. |
 | Late, duplicate, and out-of-order webhooks | Persist a verified stable event identifier before effects; duplicates are idempotent. Use authoritative server processing time for command/vote deadlines, rejecting post-deadline writes regardless of event timestamp. |
 
-The implementation plan defines image download validation/limits, 90-day
-operational-record retention, minimal user identifiers, backups, restart
+The implementation plan defines HTTPS URL validation, 90-day operational-record
+retention, minimal user identifiers, backups, restart
 recovery, webhook verification/duplicate handling, and acceptance checks.
 Card 00 authorizes the first implementation card; the tracker remains
 repository-local for development.

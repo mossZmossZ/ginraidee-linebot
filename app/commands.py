@@ -1,8 +1,6 @@
-from pathlib import Path
 from urllib.parse import urlsplit
 
 from app.database import Database
-from app.images import ImageFetcher, ImageValidationError, delete_image, save_normalized_image
 from app.messages import (
     ADD_IMAGE_PROMPT,
     ADD_NAME_PROMPT,
@@ -10,6 +8,7 @@ from app.messages import (
     EMPTY_CATALOG,
     INVALID_IMAGE,
     LIST_EMPTY,
+    LIST_MORE,
     MANAGEMENT_STARTED,
     RESTAURANT_ADDED,
     UNKNOWN_MANAGEMENT_ACTION,
@@ -22,15 +21,9 @@ class CommandHandler:
         self,
         database: Database,
         transport: ReplyTransport,
-        image_fetcher: ImageFetcher | None = None,
-        image_directory: Path | None = None,
-        public_base_url: str = "http://localhost:8000",
     ) -> None:
         self.database = database
         self.transport = transport
-        self.image_fetcher = image_fetcher or ImageFetcher()
-        self.image_directory = image_directory
-        self.public_base_url = public_base_url.rstrip("/")
 
     async def handle_ginrai(self, group_id: str, reply_token: str) -> None:
         if self.database.restaurant_count(group_id) == 0:
@@ -70,23 +63,33 @@ class CommandHandler:
             self.database.begin_add_restaurant(group_id, user_id)
             await self.transport.reply_text(reply_token, ADD_NAME_PROMPT)
             return
-        if action == "รายการ":
+        page = _catalog_page(action)
+        if page is not None:
             restaurants = self.database.list_restaurants(group_id)
             if not restaurants:
                 await self.transport.reply_text(reply_token, LIST_EMPTY)
                 return
             messages: list[dict[str, str]] = []
-            for restaurant in restaurants[:5]:
-                image_url = self._image_url(restaurant.stored_image_id)
+            first_index = (page - 1) * 2
+            page_restaurants = restaurants[first_index : first_index + 2]
+            if not page_restaurants:
+                await self.transport.reply_text(reply_token, UNKNOWN_MANAGEMENT_ACTION)
+                return
+            for restaurant in page_restaurants:
+                image_url = restaurant.source_image_url
                 messages.extend(
                     [
                         {"type": "text", "text": restaurant.display_name},
-                        {
-                            "type": "image",
-                            "originalContentUrl": image_url,
-                            "previewImageUrl": image_url,
-                        },
+                        _image_message(image_url),
                     ]
+                )
+            remaining_count = len(restaurants) - (first_index + len(page_restaurants))
+            if remaining_count:
+                messages.append(
+                    {
+                        "type": "text",
+                        "text": LIST_MORE.format(count=remaining_count, page=page + 1),
+                    }
                 )
             await self.transport.reply_messages(reply_token, messages)
             return
@@ -100,44 +103,45 @@ class CommandHandler:
         url: str,
         draft_name: str | None,
     ) -> None:
-        if not draft_name or self.image_directory is None:
-            raise RuntimeError("Management image storage is not configured")
-        try:
-            downloaded = await self.image_fetcher.fetch(url)
-        except (ImageValidationError, ValueError):
+        if not draft_name:
+            raise RuntimeError("Management session is missing the restaurant name")
+        if not _is_https_url(url):
             await self.transport.reply_text(reply_token, INVALID_IMAGE)
             return
-        if not _is_https_url(self.public_base_url):
-            await self.transport.reply_text(reply_token, "ตั้งค่า APP_PUBLIC_BASE_URL เป็น HTTPS ก่อนเพิ่มรูปภาพ")
-            return
-        try:
-            image_id = save_normalized_image(self.image_directory, downloaded.content)
-        except (ImageValidationError, ValueError):
-            await self.transport.reply_text(reply_token, INVALID_IMAGE)
-            return
-        if not self.database.add_restaurant(group_id, draft_name, downloaded.source_url, image_id):
-            delete_image(self.image_directory, image_id)
+        if not self.database.add_restaurant(group_id, draft_name, url):
             self.database.clear_management_session(group_id, user_id)
             await self.transport.reply_text(reply_token, "มีร้านชื่อนี้อยู่แล้ว กรุณาเริ่มใหม่")
             return
         self.database.clear_management_session(group_id, user_id)
-        image_url = self._image_url(image_id)
         await self.transport.reply_messages(
             reply_token,
             [
                 {"type": "text", "text": RESTAURANT_ADDED.format(name=draft_name)},
-                {
-                    "type": "image",
-                    "originalContentUrl": image_url,
-                    "previewImageUrl": image_url,
-                },
+                _image_message(url),
             ],
         )
 
-    def _image_url(self, image_id: str) -> str:
-        return f"{self.public_base_url}/images/{image_id}"
-
 
 def _is_https_url(url: str) -> bool:
-    parsed = urlsplit(url)
-    return parsed.scheme == "https" and parsed.hostname is not None
+    if not url or any(character.isspace() for character in url):
+        return False
+    try:
+        parsed = urlsplit(url)
+        parsed.port
+    except ValueError:
+        return False
+    return parsed.scheme.lower() == "https" and parsed.hostname is not None
+
+
+def _catalog_page(action: str) -> int | None:
+    parts = action.split()
+    if parts == ["รายการ"]:
+        return 1
+    if len(parts) == 2 and parts[0] == "รายการ" and parts[1].isdecimal():
+        page = int(parts[1])
+        return page if page > 0 else None
+    return None
+
+
+def _image_message(url: str) -> dict[str, str]:
+    return {"type": "image", "originalContentUrl": url, "previewImageUrl": url}

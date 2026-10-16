@@ -36,9 +36,9 @@ class ManagementSession:
 
 
 class Restaurant:
-    def __init__(self, display_name: str, stored_image_id: str) -> None:
+    def __init__(self, display_name: str, source_image_url: str) -> None:
         self.display_name = display_name
-        self.stored_image_id = stored_image_id
+        self.source_image_url = source_image_url
 
 
 class Database:
@@ -76,7 +76,6 @@ class Database:
                     display_name TEXT NOT NULL,
                     normalized_display_name TEXT NOT NULL,
                     source_image_url TEXT NOT NULL,
-                    stored_image_id TEXT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 );
@@ -136,6 +135,7 @@ class Database:
                 connection.execute(
                     "ALTER TABLE webhook_receipts ADD COLUMN user_id TEXT NOT NULL DEFAULT ''"
                 )
+
     def restaurant_count(self, group_id: str) -> int:
         with self._connection() as connection:
             row = connection.execute(
@@ -235,9 +235,7 @@ class Database:
     def mark_management_retry(self, event_id: str) -> None:
         self._set_management_status(event_id, "retry")
 
-    def add_restaurant(
-        self, group_id: str, display_name: str, source_image_url: str, stored_image_id: str
-    ) -> bool:
+    def add_restaurant(self, group_id: str, display_name: str, source_image_url: str) -> bool:
         normalized_name = _normalize_name(display_name)
         now = self._utc_now()
         with self._connection() as connection:
@@ -245,28 +243,21 @@ class Database:
                 """
                 INSERT OR IGNORE INTO restaurants(
                     group_id, display_name, normalized_display_name, source_image_url,
-                    stored_image_id, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (group_id, display_name, normalized_name, source_image_url, stored_image_id, now, now),
+                (group_id, display_name, normalized_name, source_image_url, now, now),
             ).rowcount
         return bool(inserted)
 
     def list_restaurants(self, group_id: str) -> list[Restaurant]:
         with self._connection() as connection:
             rows = connection.execute(
-                "SELECT display_name, stored_image_id FROM restaurants "
+                "SELECT display_name, source_image_url FROM restaurants "
                 "WHERE group_id = ? ORDER BY restaurant_id",
                 (group_id,),
             ).fetchall()
-        return [Restaurant(*row) for row in rows if row[1] is not None]
-
-    def referenced_image_ids(self) -> set[str]:
-        with self._connection() as connection:
-            rows = connection.execute(
-                "SELECT stored_image_id FROM restaurants WHERE stored_image_id IS NOT NULL"
-            ).fetchall()
-        return {row[0] for row in rows}
+        return [Restaurant(*row) for row in rows]
 
     def _ensure_group(self, group_id: str) -> None:
         with self._connection() as connection:
