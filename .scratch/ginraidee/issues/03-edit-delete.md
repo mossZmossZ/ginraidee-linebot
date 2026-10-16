@@ -8,7 +8,7 @@
 
 ## What to build
 
-Any member edits a selected restaurant's name/image or confirms its deletion through @ginrai-manage.
+Any member edits a selected restaurant's name/image or confirms its deletion through @ginraidee-bot manage.
 
 ## Todo
 

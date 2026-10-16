@@ -25,7 +25,7 @@ Started polls close at Bangkok noon, store the correct winner/fallback reason, a
 - [ ] On restart after noon, overdue polls close and accepted announcement work resumes.
 - [ ] Failed/limited LINE delivery does not reopen voting; retries and unresolved delivery failures are visible.
 - [ ] No new poll is created by the closer; no active poll means no scheduled lunch announcement.
-- [ ] @ginrai after closure returns the same stored result; old reply tokens are not reused for noon push delivery.
+- [ ] @ginraidee-bot after closure returns the same stored result; old reply tokens are not reused for noon push delivery.
 
 ## Verification
 

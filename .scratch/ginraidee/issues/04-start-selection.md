@@ -8,7 +8,7 @@
 
 ## What to build
 
-Before noon, @ginrai selects two distinct eligible restaurants and opens a custom vote, or directly announces a sole restaurant.
+Before noon, @ginraidee-bot selects two distinct eligible restaurants and opens a custom vote, or directly announces a sole restaurant.
 
 ## Todo
 
@@ -19,10 +19,10 @@ Before noon, @ginrai selects two distinct eligible restaurants and opens a custo
 
 ## Acceptance criteria
 
-- [ ] Only the typed @ginrai command starts a selection; ordinary conversation and schedules do not.
+- [ ] Only the typed @ginraidee-bot command starts a selection; ordinary conversation and schedules do not.
 - [ ] With at least two entries, exactly two distinct choices come from that group's catalog with no weighting.
 - [ ] With one entry, announce it directly, explain only one is available and do not open a vote.
-- [ ] Repeating/concurrently sending @ginrai reuses the same open choices without resetting votes or deadline.
+- [ ] Repeating/concurrently sending @ginraidee-bot reuses the same open choices without resetting votes or deadline.
 - [ ] At or after 12:00 Asia/Bangkok, show today's result or the closed message; never open a new poll.
 - [ ] Empty catalogs, repeated days and single-restaurant daily results follow accepted D1.
 - [ ] Choice names/images remain stable independently of later catalog updates.

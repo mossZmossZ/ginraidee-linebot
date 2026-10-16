@@ -1,8 +1,10 @@
 # ginraidee-linebot
 
 A planned open-source LINE group bot for choosing where to eat lunch.
-Members manage their group's restaurants with `@ginrai-manage` and start
-selection with `@ginrai`. Voting closes at 12:00 noon, Thailand time.
+Members manage their group's restaurants with `@ginraidee-bot manage` and
+start selection with `@ginraidee-bot`. The legacy `@ginrai` commands and the
+hyphenated `@ginraidee-bot-manage` spelling remain supported for compatibility.
+Voting closes at 12:00 noon, Thailand time.
 
 Planned stack: Python, FastAPI, SQLite, and Docker with persistent database
 storage. Restaurant images remain HTTPS source URLs. Local and server
@@ -37,7 +39,8 @@ Prerequisites: Docker Desktop and credentials from a LINE Messaging API channel.
 3. Confirm `http://localhost:8000/healthz` returns `{"status":"ok"}`.
 4. Configure a public HTTPS tunnel to `http://localhost:8000/callback` in the
    LINE Developers Console, then add the bot to a test group and send
-   `@ginrai`. An empty group receives the Thai prompt to use `@ginrai-manage`.
+   `@ginraidee-bot`. An empty group receives the Thai prompt to use
+   `@ginraidee-bot manage`.
 
 The `ginraidee_data` named volume holds the SQLite database. `docker compose
 down` keeps it; do not use `docker compose down --volumes` when checking

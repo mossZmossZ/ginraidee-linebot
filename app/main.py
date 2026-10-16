@@ -15,6 +15,15 @@ from app.security import has_valid_line_signature
 from app.transport import LineReplyTransport, NonRetryableReplyError, ReplyTransport
 
 
+COMMAND_ALIASES = {
+    "@ginrai": "@ginrai",
+    "@ginraidee-bot": "@ginrai",
+    "@ginrai-manage": "@ginrai-manage",
+    "@ginraidee-bot manage": "@ginrai-manage",
+    "@ginraidee-bot-manage": "@ginrai-manage",
+}
+
+
 def create_app(
     settings: Settings | None = None,
     transport: ReplyTransport | None = None,
@@ -85,13 +94,14 @@ async def _dispatch_event(
     text = message.get("text")
     if not all(isinstance(value, str) for value in (group_id, user_id, reply_token, text)):
         return
-    if text not in {"@ginrai", "@ginrai-manage"}:
+    command = COMMAND_ALIASES.get(text)
+    if command is None:
         work = database.claim_management_event(_event_id(event), group_id, user_id, reply_token, text)
         if work is not None:
             await _process_management_work(work, database, command_handler, raise_on_failure=True)
         return
 
-    work = database.claim_webhook_event(_event_id(event), group_id, user_id, reply_token, text)
+    work = database.claim_webhook_event(_event_id(event), group_id, user_id, reply_token, command)
     if work is None:
         return
     await _process_work(work, database, command_handler, raise_on_failure=True)

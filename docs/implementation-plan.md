@@ -19,14 +19,14 @@ uses `docker-compose.yml`; the server uses one standalone
 | Situation | Expected behavior |
 | --- | --- |
 | Ordinary group conversation | Do not start a lunch selection. |
-| Typed `@ginrai` before noon, two or more restaurants | Select two distinct restaurants with equal chances; show images and voting buttons. |
-| Typed `@ginrai`, one restaurant before noon | Announce that restaurant directly, explaining only one is available; no vote. |
-| Typed `@ginrai` while a poll is open | Show the same choices and buttons; preserve votes and deadline. |
+| Typed `@ginraidee-bot` before noon, two or more restaurants | Select two distinct restaurants with equal chances; show images and voting buttons. |
+| Typed `@ginraidee-bot`, one restaurant before noon | Announce that restaurant directly, explaining only one is available; no vote. |
+| Typed `@ginraidee-bot` while a poll is open | Show the same choices and buttons; preserve votes and deadline. |
 | Vote button | One vote per user per poll; another choice replaces it; repeated taps do not add votes. |
 | Deadline | Close voting at 12:00 noon, Asia/Bangkok. |
 | Tie or no votes | Select randomly between the poll's choices and explain the fallback. |
-| Typed `@ginrai` at or after noon | Show today's result, or explain voting is closed if there is no result. |
-| Typed `@ginrai-manage` | Guided Add/Edit/Delete flow inside the group; all group members may use it. |
+| Typed `@ginraidee-bot` at or after noon | Show today's result, or explain voting is closed if there is no result. |
+| Typed `@ginraidee-bot manage` | Guided Add/Edit/Delete flow inside the group; all group members may use it. |
 | Restaurant image input | Accept and retain an HTTPS image URL; send that original URL to LINE. |
 | Another group uses the bot | Keep catalogs, polls, votes, and management operations separate. |
 
@@ -44,7 +44,7 @@ production release gate.
 | ID | Area | Approved decision |
 | --- | --- | --- |
 | D1 | Edge cases and daily selection | Empty list: explain how to add restaurants. One final selection per group per Bangkok calendar day, including a single-restaurant result. Restaurants may appear again on later days. |
-| D2 | Result delivery and restaurant changes | Announce results automatically at noon only for polls started by `@ginrai`. Keep poll choices as snapshots so edits/deletions do not change an existing vote. Closing a started poll is separate from creating a scheduled poll. |
+| D2 | Result delivery and restaurant changes | Announce results automatically at noon only for polls started by `@ginraidee-bot`. Keep poll choices as snapshots so edits/deletions do not change an existing vote. Closing a started poll is separate from creating a scheduled poll. |
 | D3 | Management sessions | Isolate sessions by group and user; provide Cancel; expire after 10 minutes of inactivity; confirm deletions; reject blank names and duplicates after trimming/case normalization. First-release bot messages are Thai. Keep message text centralized so a later language option does not alter domain rules. |
 | D4 | Deployment and license | Each operator deploys independently with its own LINE credentials. Use the MIT License for the repository. The project owner chooses the public hostname and HTTPS termination approach before card 07 is accepted; this does not block local development. |
 | D5 | People and models | The project owner is the CEO and owns final scope/release decisions and real LINE UAT. A separate Codex chat using `terra` with high reasoning performs the developer and tester roles. The current Codex chat is tech lead until handoff; each card records the actual execution environment. |
@@ -70,8 +70,8 @@ flowchart LR
 - Keep webhook parsing/LINE transport separate from restaurant, poll, and vote
   behavior so tests can exercise the real rules without calling LINE.
 - Verify the signature over the original request body before processing it.
-  Dispatch the full command exactly so `@ginrai-manage` is not mistaken for
-  `@ginrai`; accept management replies only in an active session.
+  Dispatch the full command exactly so `@ginraidee-bot manage` is not mistaken
+  for `@ginraidee-bot`; accept management replies only in an active session.
 - Use SQLite transactions and constraints to enforce group ownership, one open
   poll, one vote per user/poll, and unique webhook processing. Do not rely only
   on process memory for these rules.

@@ -24,17 +24,17 @@ the implementation plan govern the related test behaviors.
 | --- | --- | --- | --- |
 | U01 | Start local Compose from documented setup | Bot becomes healthy; missing configuration is clearly reported. | Not run |
 | U02 | Send ordinary group text | No lunch selection starts. | Not run |
-| U03 | Use `@ginrai-manage` to add a name and HTTPS image URL | LINE displays the original URL; the entry and exact URL remain after container replacement. | Not run |
+| U03 | Use `@ginraidee-bot manage` to add a name and HTTPS image URL | LINE displays the original URL; the entry and exact URL remain after container replacement. | Not run |
 | U04 | Repeat U03 with another group member | That member can manage the same group's catalog. | Not run |
 | U05 | Edit an entry and confirm a deletion | Correct entry changes; other entries and groups remain intact. | Not run |
-| U06 | Start `@ginrai` before noon with at least two entries | Two distinct choices from this group's list appear with images and vote buttons. | Not run |
-| U07 | Repeat `@ginrai` during the open poll | Same choices and deadline; votes are preserved. | Not run |
+| U06 | Start `@ginraidee-bot` before noon with at least two entries | Two distinct choices from this group's list appear with images and vote buttons. | Not run |
+| U07 | Repeat `@ginraidee-bot` during the open poll | Same choices and deadline; votes are preserved. | Not run |
 | U08 | Two users vote, one changes choice, then repeatedly taps | One current vote per user; totals reflect the changed choice without duplicate counting. | Not run |
 | U09 | Reach noon with a clear majority | Voting closes and the majority result is stored; announcement follows the accepted D2 policy. | Not run |
 | U10 | Reach noon with a tie | One of the two choices wins; the bot explains a random tie-break. | Not run |
 | U11 | Reach noon with no votes | One of the choices wins; the bot explains nobody voted. | Not run |
 | U12 | Vote at or after noon, including from an old message | Vote is rejected; stored outcome remains unchanged. | Not run |
-| U13 | Use `@ginrai` after noon with and without a result | Show today's result, or explain voting is closed. | Not run |
+| U13 | Use `@ginraidee-bot` after noon with and without a result | Show today's result, or explain voting is closed. | Not run |
 | U14 | Use a group with exactly one restaurant before noon | Announce that restaurant directly with the one-entry explanation; no poll. | Not run |
 | U15 | Use an empty group catalog | Follow accepted D1 empty-list behavior; no invented restaurant or duplicate choices. | Not run |
 | U16 | Use two groups and reuse an old/foreign action | Catalogs, management sessions, votes and outcomes remain scoped to the correct group/poll. | Not run |

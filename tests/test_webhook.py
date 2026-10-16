@@ -77,7 +77,7 @@ def test_signed_ginrai_from_empty_group_prompts_setup_in_thai(tmp_path: Path) ->
 
     assert response.status_code == 200
     assert transport.replies == [
-        ("reply-token", "ยังไม่มีร้านอาหารในกลุ่มนี้ พิมพ์ @ginrai-manage เพื่อเพิ่มร้านอาหาร")
+        ("reply-token", "ยังไม่มีร้านอาหารในกลุ่มนี้ พิมพ์ @ginraidee-bot manage เพื่อเพิ่มร้านอาหาร")
     ]
 
 
@@ -90,6 +90,28 @@ def test_manage_command_reaches_its_own_entry_point(tmp_path: Path) -> None:
     assert response.status_code == 200
     assert transport.replies == [
         ("reply-token", "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ หรือ ยกเลิก")
+    ]
+
+
+def test_bot_name_commands_route_to_selection_and_management_entry_points(tmp_path: Path) -> None:
+    client, transport = make_client(tmp_path)
+
+    with client:
+        selection = post_event(client, text_event("@ginraidee-bot", event_id="named-selection"))
+        management = post_event(
+            client, text_event("@ginraidee-bot manage", event_id="named-management")
+        )
+        hyphenated_management = post_event(
+            client, text_event("@ginraidee-bot-manage", event_id="hyphenated-management")
+        )
+
+    assert selection.status_code == 200
+    assert management.status_code == 200
+    assert hyphenated_management.status_code == 200
+    assert transport.replies == [
+        ("reply-token", "ยังไม่มีร้านอาหารในกลุ่มนี้ พิมพ์ @ginraidee-bot manage เพื่อเพิ่มร้านอาหาร"),
+        ("reply-token", "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ หรือ ยกเลิก"),
+        ("reply-token", "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ หรือ ยกเลิก"),
     ]
 
 
@@ -165,7 +187,7 @@ def test_startup_retries_durable_webhook_work_after_failed_delivery(tmp_path: Pa
 
     assert failed_delivery.status_code == 500
     assert recovered_transport.replies == [
-        ("reply-token", "ยังไม่มีร้านอาหารในกลุ่มนี้ พิมพ์ @ginrai-manage เพื่อเพิ่มร้านอาหาร")
+        ("reply-token", "ยังไม่มีร้านอาหารในกลุ่มนี้ พิมพ์ @ginraidee-bot manage เพื่อเพิ่มร้านอาหาร")
     ]
 
 

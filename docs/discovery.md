@@ -36,14 +36,15 @@ implementation after the user confirms the shared understanding and scope.
 ### Group lunch selection and voting
 
 - Invite the bot into a LINE group.
-- Invoke `@ginrai` to randomly select two restaurant choices and create a vote
+- Invoke `@ginraidee-bot` to randomly select two restaurant choices and create a vote
   in the group.
-- A lunch poll starts only when a user invokes `@ginrai`; it must not start
+- A lunch poll starts only when a user invokes `@ginraidee-bot`; it must not start
   automatically on a schedule or in response to ordinary group conversation.
-  Use the literal typed command `@ginrai` to start a poll and the literal typed
-  command `@ginrai-manage` for management. The user's "yes" was interpreted as
-  acceptance of this recommendation; actual LINE mention support is not part
-  of the confirmed scope.
+  Use the literal typed command `@ginraidee-bot` to start a poll and
+  `@ginraidee-bot manage` for management. The legacy `@ginrai` and
+  `@ginrai-manage` commands, plus the hyphenated `@ginraidee-bot-manage`
+  spelling, remain supported for compatibility. Actual LINE mention support
+  is not part of the confirmed scope.
 - Confirmed: use a custom bot voting message with two restaurant buttons.
   The bot records votes and rejects voting after the agreed deadline.
 - Random selection gives every restaurant in the group's catalog an equal
@@ -60,27 +61,27 @@ implementation after the user confirms the shared understanding and scope.
 - Each LINE user has one vote per poll and may change their choice before
   the deadline. Choosing the other restaurant replaces the previous vote;
   repeated taps on the same choice do not add votes.
-- Each group may have only one open poll. Repeating `@ginrai` while it is open
+- Each group may have only one open poll. Repeating `@ginraidee-bot` while it is open
   shows the existing choices and voting buttons without changing the choices,
   resetting votes, or changing the closing deadline.
-- At or after 12:00 noon in Asia/Bangkok, `@ginrai` does not open a new poll.
+- At or after 12:00 noon in Asia/Bangkok, `@ginraidee-bot` does not open a new poll.
   It shows today's result if a poll was held; otherwise it explains that voting
   is closed and asks the user to start a poll before noon the next day.
 - If both restaurants receive an equal, nonzero number of votes, the bot
   randomly selects the winner and announces that a random tie-break was used.
 - If nobody votes by the deadline, the bot randomly chooses one of the two
   restaurants and announces that nobody voted.
-- Invoke `@ginrai-manage` to add, edit, and delete restaurant entries.
+- Invoke `@ginraidee-bot manage` to add, edit, and delete restaurant entries.
 - Each entry represents a restaurant (a place to eat), with a restaurant name
   and an image source. The earlier phrase `menu name` means the restaurant's
   name; a separate dish catalog is not required.
 - Restaurant images are provided as pasted HTTPS image URLs in the first
   release. Uploading photos in LINE is outside the confirmed first-release scope.
-- Each LINE group has its own separate catalog. `@ginrai-manage` changes only
-  that group's entries, and `@ginrai` selects only from that group's catalog.
-- Every member of a group may use `@ginrai-manage` to add, edit, or delete that
+- Each LINE group has its own separate catalog. `@ginraidee-bot manage` changes
+  only that group's entries, and `@ginraidee-bot` selects only from that group's catalog.
+- Every member of a group may use `@ginraidee-bot manage` to add, edit, or delete that
   group's entries. Designated manager restrictions are not required.
-- `@ginrai-manage` opens a guided flow inside the LINE group chat, with Add,
+- `@ginraidee-bot manage` opens a guided flow inside the LINE group chat, with Add,
   Edit, and Delete buttons and prompts for restaurant names and image URLs.
   No separate management website is required for the first release. Replies
   to management prompts belong to that flow and do not start lunch polls.
@@ -168,7 +169,7 @@ hostname remains deferred to card 07 and does not block local development.
 | Area | Approved decision |
 | --- | --- |
 | Empty catalog and daily selection | Show an add-restaurants prompt for an empty catalog; create one final selection per group per Bangkok day (including a sole restaurant); allow restaurants to repeat on later days. |
-| Poll completion and catalog changes | Automatically announce the result at noon for an `@ginrai` poll; retain original restaurant names and images in poll snapshots after catalog edits/deletions. |
+| Poll completion and catalog changes | Automatically announce the result at noon for an `@ginraidee-bot` poll; retain original restaurant names and images in poll snapshots after catalog edits/deletions. |
 | Management flow | Use separate sessions per group member, Cancel, 10-minute inactivity expiry, deletion confirmation, and Thai first-release message text. |
 | Distribution and hosting | Operators deploy independently with their own credentials; the repository is MIT licensed. The project owner chooses the server domain and HTTPS setup before production deployment. |
 | Development roles | The project owner is CEO and manual LINE-UAT owner. The current Codex chat is tech lead until handoff; a separate `terra`, high chat performs development and testing. |

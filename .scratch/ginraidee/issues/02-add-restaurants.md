@@ -41,7 +41,7 @@ normalized-name uniqueness.
 
 Focused checks run:
 
-- `uv run --group dev pytest -q` — 15 passed (one upstream Starlette deprecation warning).
+- `uv run --group dev pytest -q` — 16 passed (one upstream Starlette deprecation warning).
 - `uv run --group dev ruff check .` — passed.
 - `docker compose config` with placeholder credentials — passed.
 - `docker compose build` — passed; the resulting image does not install Pillow.
