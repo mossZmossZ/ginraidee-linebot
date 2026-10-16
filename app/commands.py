@@ -22,6 +22,7 @@ from app.messages import (
     RESTAURANT_NOT_FOUND,
     RESTAURANT_ADDED,
     RESTAURANT_UPDATED,
+    SELECTION_ROW,
     SELECT_RESTAURANT_PROMPT,
     STALE_RESTAURANT,
     UNKNOWN_MANAGEMENT_ACTION,
@@ -86,7 +87,7 @@ class CommandHandler:
         if session.draft_action in {"edit-select", "delete-select"}:
             page = _catalog_page(action)
             if page is not None:
-                await self._send_selection_page(group_id, reply_token, page)
+                await self._send_selection_page(group_id, user_id, reply_token, page)
                 return
             if action.isdecimal():
                 restaurant_id = _restaurant_id(action)
@@ -137,7 +138,7 @@ class CommandHandler:
         if action in {"แก้ไข", "ลบ"}:
             selection_action = "edit" if action == "แก้ไข" else "delete"
             self.database.begin_restaurant_selection(group_id, user_id, selection_action)
-            await self._send_selection_page(group_id, reply_token, 1)
+            await self._send_selection_page(group_id, user_id, reply_token, 1)
             return
         page = _catalog_page(action)
         if page is not None:
@@ -171,8 +172,10 @@ class CommandHandler:
             return
         await self.transport.reply_text(reply_token, UNKNOWN_MANAGEMENT_ACTION)
 
-    async def _send_selection_page(self, group_id: str, reply_token: str, page: int) -> None:
-        restaurants = self.database.list_restaurants(group_id)
+    async def _send_selection_page(
+        self, group_id: str, user_id: str, reply_token: str, page: int
+    ) -> None:
+        restaurants = self.database.list_selection_restaurants(group_id, user_id)
         if not restaurants:
             await self.transport.reply_text(reply_token, LIST_EMPTY)
             return
@@ -187,7 +190,9 @@ class CommandHandler:
         messages.extend(
             {
                 "type": "text",
-                "text": f"#{restaurant.restaurant_id} — {restaurant.display_name}",
+                "text": SELECTION_ROW.format(
+                    id=restaurant.restaurant_id, name=restaurant.display_name
+                ),
             }
             for restaurant in page_restaurants
         )

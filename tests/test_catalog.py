@@ -364,6 +364,44 @@ def test_reused_sqlite_id_cannot_make_stale_confirmation_delete_new_restaurant(
     assert "ถูกเปลี่ยนแปลง" in transport.replies[-1][1][0]["text"]
 
 
+def test_reused_sqlite_id_cannot_change_target_after_selection_list_was_shown(
+    tmp_path: Path,
+) -> None:
+    transport = RecordingTransport()
+    settings = Settings("secret", "token", tmp_path / "state.db")
+    client = TestClient(create_app(settings, transport))
+
+    with client:
+        add_restaurant(client, name="ร้านที่แสดง")
+        post(client, event("@ginrai-manage", "snapshot-owner-manage", user_id="snapshot-owner"))
+        post(client, event("ลบ", "snapshot-owner-delete", user_id="snapshot-owner"))
+        selection_text = transport.replies[-1][1][1]["text"]
+        original_id = int(selection_text.split()[0].removeprefix("#"))
+
+        post(client, event("@ginrai-manage", "replacement-manage", user_id="replacement-owner"))
+        post(client, event("ลบ", "replacement-delete", user_id="replacement-owner"))
+        post(
+            client,
+            event(str(original_id), "replacement-select", user_id="replacement-owner"),
+        )
+        post(client, event("ยืนยัน", "replacement-confirm", user_id="replacement-owner"))
+        add_restaurant(client, user_id="replacement-owner", name="ร้านทดแทน")
+
+        post(
+            client,
+            event(str(original_id), "snapshot-stale-select", user_id="snapshot-owner"),
+        )
+        assert "ไม่พบหมายเลขร้านนี้" in transport.replies[-1][1][0]["text"]
+        post(client, event("ยืนยัน", "snapshot-stale-confirm", user_id="snapshot-owner"))
+        assert "ส่งหมายเลขร้านที่แสดง" in transport.replies[-1][1][0]["text"]
+
+    with sqlite3.connect(settings.database_path) as connection:
+        remaining = connection.execute(
+            "SELECT restaurant_id, display_name FROM restaurants"
+        ).fetchone()
+    assert remaining == (original_id, "ร้านทดแทน")
+
+
 def test_existing_database_migration_preserves_restaurants_and_adds_selection_identity(
     tmp_path: Path,
 ) -> None:
@@ -412,3 +450,4 @@ def test_existing_database_migration_preserves_restaurants_and_adds_selection_id
     with sqlite3.connect(database_path) as connection:
         session_columns = {row[1] for row in connection.execute("PRAGMA table_info(management_sessions)")}
     assert "selected_restaurant_key" in session_columns
+    assert "selection_snapshot" in session_columns

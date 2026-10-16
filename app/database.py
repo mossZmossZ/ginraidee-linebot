@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
+import json
 from pathlib import Path
 import sqlite3
 import uuid
@@ -127,6 +128,7 @@ class Database:
                     selected_restaurant_id INTEGER,
                     selected_restaurant_key TEXT,
                     selected_version INTEGER,
+                    selection_snapshot TEXT,
                     expires_at TEXT NOT NULL,
                     PRIMARY KEY (group_id, user_id)
                 );
@@ -191,6 +193,7 @@ class Database:
                 ("selected_restaurant_id", "INTEGER"),
                 ("selected_restaurant_key", "TEXT"),
                 ("selected_version", "INTEGER"),
+                ("selection_snapshot", "TEXT"),
             ):
                 if column not in session_columns:
                     connection.execute(
@@ -278,13 +281,49 @@ class Database:
     def begin_restaurant_selection(self, group_id: str, user_id: str, action: str) -> None:
         if action not in {"edit", "delete"}:
             raise ValueError("Unsupported restaurant selection action")
-        self._save_session(
-            group_id,
-            user_id,
-            "action",
-            None,
-            draft_action=f"{action}-select",
-        )
+        with self._connection() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            rows = connection.execute(
+                "SELECT restaurant_id, selection_key, display_name, source_image_url, version "
+                "FROM restaurants WHERE group_id = ? ORDER BY restaurant_id",
+                (group_id,),
+            ).fetchall()
+            snapshot = json.dumps(rows, ensure_ascii=False)
+            connection.execute(
+                """
+                INSERT INTO management_sessions(
+                    group_id, user_id, step, draft_action, selection_snapshot, expires_at
+                ) VALUES (?, ?, 'action', ?, ?, ?)
+                ON CONFLICT(group_id, user_id) DO UPDATE SET
+                    step = 'action', draft_name = NULL, draft_action = excluded.draft_action,
+                    selected_restaurant_id = NULL, selected_restaurant_key = NULL,
+                    selected_version = NULL, selection_snapshot = excluded.selection_snapshot,
+                    expires_at = excluded.expires_at
+                """,
+                (
+                    group_id,
+                    user_id,
+                    f"{action}-select",
+                    snapshot,
+                    self._session_expiry(),
+                ),
+            )
+
+    def list_selection_restaurants(self, group_id: str, user_id: str) -> list[Restaurant]:
+        with self._connection() as connection:
+            row = connection.execute(
+                "SELECT selection_snapshot FROM management_sessions "
+                "WHERE group_id = ? AND user_id = ? AND step = 'action' "
+                "AND draft_action IN ('edit-select', 'delete-select') AND expires_at > ?",
+                (group_id, user_id, self._utc_now()),
+            ).fetchone()
+        if row is None or row[0] is None:
+            return []
+        try:
+            entries = json.loads(row[0])
+            return [Restaurant(*entry) for entry in entries]
+        except (TypeError, ValueError):
+            return []
 
     def select_restaurant(
         self, group_id: str, user_id: str, restaurant_id: int
@@ -292,18 +331,27 @@ class Database:
         now = self._utc_now()
         with self._connection() as connection:
             session = connection.execute(
-                "SELECT draft_action FROM management_sessions "
+                "SELECT draft_action, selection_snapshot FROM management_sessions "
                 "WHERE group_id = ? AND user_id = ? AND step = 'action' AND expires_at > ?",
                 (group_id, user_id, now),
             ).fetchone()
             if session is None or session[0] not in {"edit-select", "delete-select"}:
+                return None
+            try:
+                snapshot = json.loads(session[1])
+                snapshot_row = next(
+                    (entry for entry in snapshot if entry[0] == restaurant_id), None
+                )
+            except (IndexError, TypeError, ValueError):
+                return None
+            if snapshot_row is None:
                 return None
             row = connection.execute(
                 "SELECT restaurant_id, selection_key, display_name, source_image_url, version "
                 "FROM restaurants WHERE group_id = ? AND restaurant_id = ?",
                 (group_id, restaurant_id),
             ).fetchone()
-            if row is None:
+            if row is None or row[1] != snapshot_row[1] or row[4] != snapshot_row[4]:
                 return None
             action = session[0]
             if action == "edit-select":
@@ -509,6 +557,7 @@ class Database:
                     selected_restaurant_id = excluded.selected_restaurant_id,
                     selected_restaurant_key = excluded.selected_restaurant_key,
                     selected_version = excluded.selected_version,
+                    selection_snapshot = NULL,
                     expires_at = excluded.expires_at
                 """,
                 (

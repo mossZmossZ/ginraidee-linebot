@@ -41,27 +41,33 @@ Manual check: Two group members exercise Edit, Cancel and Delete, then verify th
 Developer environment: current Codex workspace, Python 3.12.13 via `uv`.
 
 Added Edit/Delete management flows. Selection uses the restaurant number shown
-in the group-scoped list. Each row also has a non-reusable internal key and
-version, so a stale selection cannot mutate a changed row or a new row that
-reuses a SQLite integer ID. Edits use the existing HTTPS URL validation, reject
-blank and duplicate names, and send the updated source image URL to LINE.
-Deletion requires `ยืนยัน`; `ยกเลิก` clears the session without changing the
-restaurant. SQLite upgrades add row versions, selection keys, and session state
-to existing databases without removing catalog data.
+in the group-scoped list. The list is snapshotted when Edit/Delete starts, and a
+submitted number must still match that snapshot's internal key and version in
+the live group catalog. A regression test confirms that deleting a listed row
+and reusing its SQLite integer ID cannot redirect a stale number to the new
+restaurant. Edits use the existing HTTPS URL validation, reject blank and
+duplicate names, and send the updated source image URL to LINE. Deletion
+requires `ยืนยัน`; `ยกเลิก` clears the session without changing the restaurant.
+SQLite upgrades add row versions, selection keys, and session state to existing
+databases without removing catalog data.
 
 Focused checks run:
 
-- `UV_CACHE_DIR=/private/tmp/ginraidee-uv-cache uv run --offline --group dev pytest -q` — 22 passed (one upstream Starlette deprecation warning).
+- `UV_CACHE_DIR=/private/tmp/ginraidee-uv-cache uv run --offline --group dev pytest -q` — 23 passed (one upstream Starlette deprecation warning).
 - `UV_CACHE_DIR=/private/tmp/ginraidee-uv-cache uv run --offline --group dev ruff check .` — passed.
+- `git diff --check` — passed.
 
 Manual check: not run; requires two real group members and the project owner's
 LINE credentials.
 
 | Round | Developer submission / checks | Tester result | Findings / next action |
 | --- | --- | --- | --- |
-| 1 | Edit/delete, confirmation/cancel, URL/name validation, group isolation, stale-version, reused-ID, and database migration scenarios implemented; automated checks recorded above | Not run | Await independent tester verification and required real LINE check. |
+| 1 | Edit/delete, confirmation/cancel, URL/name validation, group isolation, stale-version, SQLite ID reuse before and after selection, and database migration scenarios implemented; 23 automated tests, Ruff, and diff checks passed | Not run | Await independent tester verification and required real LINE check. |
 
-Tech-lead review: Not recorded.
+Code review: Initial review found a stale-number edge case and one uncentralized
+message template; both were fixed. Follow-up spec review confirmed both fixes,
+and standards review found no remaining hard violations. Formal tech-lead review
+after independent tester verification remains pending.
 CEO/manual disposition: Project owner authorized implementation to start before Card 02 verification on 2026-10-16; Card 03 manual UAT is not run.
 Linked bugs / continuation: None recorded.
 
