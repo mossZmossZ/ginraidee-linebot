@@ -63,6 +63,14 @@ Focused checks run:
 - `UV_CACHE_DIR=/private/tmp/ginraidee-uv-cache uv run --offline --group dev ruff check .` — passed.
 - `git diff --check` — passed.
 
+Stale-selection recovery follow-up on 2026-10-16: the bot now explains that a
+changed/deleted listed restaurant requires canceling and restarting selection;
+the stale-selection regression checks this guidance. Rechecked with
+`.venv/bin/pytest -q tests/test_catalog.py tests/test_webhook.py` — 23 passed
+(one upstream Starlette deprecation warning), `.venv/bin/ruff check .` — passed,
+and `git diff --check` — passed. This does not replace independent tester
+verification or the required real LINE check.
+
 Manual check: not run; requires two real group members and the project owner's
 LINE credentials.
 

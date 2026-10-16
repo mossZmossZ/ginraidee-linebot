@@ -391,7 +391,9 @@ def test_reused_sqlite_id_cannot_change_target_after_selection_list_was_shown(
             client,
             event(str(original_id), "snapshot-stale-select", user_id="snapshot-owner"),
         )
-        assert "ไม่พบหมายเลขร้านนี้" in transport.replies[-1][1][0]["text"]
+        stale_selection_reply = transport.replies[-1][1][0]["text"]
+        assert "ไม่พบหมายเลขร้านนี้" in stale_selection_reply
+        assert "ยกเลิก" in stale_selection_reply
         post(client, event("ยืนยัน", "snapshot-stale-confirm", user_id="snapshot-owner"))
         assert "ส่งหมายเลขร้านที่แสดง" in transport.replies[-1][1][0]["text"]
 
