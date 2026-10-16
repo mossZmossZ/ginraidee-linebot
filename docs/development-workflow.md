@@ -1,7 +1,7 @@
 # Development workflow
 
-Status: Approved in card 00 on 2026-10-16. No application implementation or
-testing has started.
+Status: Approved in card 00 on 2026-10-16. Card 01 is complete by project-owner
+confirmation; Card 02 is in development.
 
 ## Roles
 

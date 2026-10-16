@@ -6,6 +6,8 @@ import httpx
 class ReplyTransport(Protocol):
     async def reply_text(self, reply_token: str, text: str) -> None: ...
 
+    async def reply_messages(self, reply_token: str, messages: list[dict[str, str]]) -> None: ...
+
 
 class NonRetryableReplyError(Exception):
     """LINE rejected a reply token, so replaying this reply cannot recover it."""
@@ -16,13 +18,16 @@ class LineReplyTransport:
         self.channel_access_token = channel_access_token
 
     async def reply_text(self, reply_token: str, text: str) -> None:
+        await self.reply_messages(reply_token, [{"type": "text", "text": text}])
+
+    async def reply_messages(self, reply_token: str, messages: list[dict[str, str]]) -> None:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.post(
                 "https://api.line.me/v2/bot/message/reply",
                 headers={"Authorization": f"Bearer {self.channel_access_token}"},
                 json={
                     "replyToken": reply_token,
-                    "messages": [{"type": "text", "text": text}],
+                    "messages": messages,
                 },
             )
         if 400 <= response.status_code < 500 and response.status_code != 429:

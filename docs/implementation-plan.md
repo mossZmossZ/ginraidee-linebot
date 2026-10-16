@@ -1,6 +1,6 @@
 # Implementation plan
 
-Status: Approved for implementation on 2026-10-16; application development has not started.
+Status: Approved for implementation on 2026-10-16; Card 02 is in development.
 
 This plan implements the [confirmed requirements](discovery.md) and the
 operating decisions approved in card 00.

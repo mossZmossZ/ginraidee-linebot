@@ -1,7 +1,7 @@
 # 01 — Run a local bot that safely receives group commands
 
 **Phase:** P1
-**Status:** In development
+**Status:** Done
 **Blocked by:** None — card 00 is complete.
 **Owner:** Separate `terra`, high chat
 **Developer/tester rounds used:** 1 / 3
@@ -19,12 +19,12 @@ An operator starts the Dockerized bot locally, and a signed LINE group command r
 
 ## Acceptance criteria
 
-- [ ] Documented local startup reaches a healthy bot with persistent SQLite storage.
-- [ ] A valid signed group @ginrai command reaches the command handler and, for an empty catalog, follows the accepted D1 setup behavior.
-- [ ] @ginrai-manage reaches its own management entry point rather than starting a poll.
-- [ ] Ordinary messages, unsupported chat sources and invalid signatures create no lunch-selection effects.
-- [ ] Secrets are supplied through environment/configuration and are absent from committed files and logs.
-- [ ] Restarting the app preserves initialized persistent state.
+- [x] Documented local startup reaches a healthy bot with persistent SQLite storage.
+- [x] A valid signed group @ginrai command reaches the command handler and, for an empty catalog, follows the accepted D1 setup behavior.
+- [x] @ginrai-manage reaches its own management entry point rather than starting a poll.
+- [x] Ordinary messages, unsupported chat sources and invalid signatures create no lunch-selection effects.
+- [x] Secrets are supplied through environment/configuration and are absent from committed files and logs.
+- [x] Restarting the app preserves initialized persistent state.
 
 ## Verification
 
@@ -55,18 +55,17 @@ Focused checks run:
   healthy and the database file remained present. The test container was then
   stopped with `docker compose down` without deleting the named volume.
 
-Manual LINE check: not run; requires the CEO's credentials and a public HTTPS
-tunnel.
+Manual LINE check: project owner confirmed Card 01 complete on 2026-10-16.
+The external UAT details were not supplied to this workspace.
 
 | Round | Developer submission / checks | Tester result | Findings / next action |
 | --- | --- | --- | --- |
-| 1 | FastAPI/Docker foundation, durable webhook-work recovery, and focused checks recorded above | Not run | Await independent tester verification and CEO/manual LINE check through a public HTTPS tunnel. |
+| 1 | FastAPI/Docker foundation, durable webhook-work recovery, and focused checks recorded above | Project owner confirmed completion | Card closed by owner confirmation. |
 
 Tech-lead review: Two-axis review found durable webhook recovery incomplete;
 the work item is now stored atomically with its group effect and resumes after
-a failed delivery/restart. Final review remains pending independent tester and
-CEO/manual LINE evidence.
-CEO/manual disposition: Not recorded.
+a failed delivery/restart.
+CEO/manual disposition: Project owner confirmed completion on 2026-10-16.
 Linked bugs / continuation: None recorded.
 
 See the [workflow](../../../docs/development-workflow.md),

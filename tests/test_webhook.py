@@ -89,7 +89,7 @@ def test_manage_command_reaches_its_own_entry_point(tmp_path: Path) -> None:
 
     assert response.status_code == 200
     assert transport.replies == [
-        ("reply-token", "เริ่มจัดการร้านอาหารแล้ว กรุณาเลือก เพิ่ม แก้ไข หรือลบ")
+        ("reply-token", "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ หรือ ยกเลิก")
     ]
 
 
@@ -166,4 +166,28 @@ def test_startup_retries_durable_webhook_work_after_failed_delivery(tmp_path: Pa
     assert failed_delivery.status_code == 500
     assert recovered_transport.replies == [
         ("reply-token", "ยังไม่มีร้านอาหารในกลุ่มนี้ พิมพ์ @ginrai-manage เพื่อเพิ่มร้านอาหาร")
+    ]
+
+
+def test_retrying_a_management_command_retains_its_member_scope(tmp_path: Path) -> None:
+    settings = Settings(
+        channel_secret="test-channel-secret",
+        channel_access_token="test-access-token",
+        database_path=tmp_path / "state" / "ginraidee.db",
+    )
+    failed_client = TestClient(create_app(settings, FailingTransport()), raise_server_exceptions=False)
+
+    with failed_client:
+        failed_delivery = post_event(
+            failed_client, text_event("@ginrai-manage", event_id="event-manage-retry")
+        )
+
+    recovered_transport = RecordingTransport()
+    recovered_client = TestClient(create_app(settings, recovered_transport))
+    with recovered_client:
+        pass
+
+    assert failed_delivery.status_code == 500
+    assert recovered_transport.replies == [
+        ("reply-token", "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ หรือ ยกเลิก")
     ]

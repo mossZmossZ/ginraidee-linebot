@@ -1,12 +1,12 @@
 # LINE application discovery
 
-Status: Requirements and operating decisions approved for implementation
+Status: Requirements and operating decisions approved; implementation is in progress
 Started: 2026-10-15
 
 Next documents: [implementation plan and phases](implementation-plan.md),
 [Kanban board and cards](kanban.md), [development workflow](development-workflow.md),
-and [manual UAT](uat.md). Card 00 approved the plan on 2026-10-16; application
-implementation and testing have not started.
+and [manual UAT](uat.md). Card 00 approved the plan on 2026-10-16; Card 01 is
+complete by project-owner confirmation and Card 02 is in development.
 
 ## Confirmed scope
 

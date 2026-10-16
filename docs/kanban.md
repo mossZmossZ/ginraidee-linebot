@@ -1,7 +1,8 @@
 # Development Kanban
 
-Status: Card 01 is in development. No application card has passed independent
-testing or manual acceptance yet.
+Status: Card 02 is in development. Card 01 is complete by project-owner
+confirmation; Card 02 remains subject to tester verification and its required
+manual LINE check.
 
 The board and [individual cards](../.scratch/ginraidee/issues/) form the local
 planning tracker. Cards are not published to GitHub or another external tracker.
@@ -11,19 +12,19 @@ Dependencies and review gates must be satisfied before moving a card to Ready.
 
 | Backlog / Todo | Ready | In development | In testing | Tech lead / CEO review | Pending / Bug | Done |
 | --- | --- | --- | --- | --- | --- | --- |
-| 02–10: see card list below | — | 01: Local bot | — | — | — | 00: Plan and operating decisions |
+| 03–10: see card list below | — | 02: Restaurant catalog | — | — | — | 00: Plan and operating decisions; 01: Local bot |
 
 The planning bundle alone does not mark an application card Done. Card 00 was
-accepted on 2026-10-16; card 01 has an implementation submission but remains
-subject to independent testing, review, and the required manual LINE check.
+accepted on 2026-10-16 and Card 01 was subsequently confirmed complete by the
+project owner. Card 02 has not yet passed its verification and manual gates.
 
 ## Cards and dependencies
 
 | Card | Phase | Deliverable | Blocked by | Status | Role on start |
 | --- | --- | --- | --- | --- | --- |
 | [00](../.scratch/ginraidee/issues/00-review-plan.md) | P0 | Confirm scope, defaults, people/models, workflow | None | Done | Project owner + current Codex chat |
-| [01](../.scratch/ginraidee/issues/01-local-bot.md) | P1 | Local bot receives signed commands | 00 | In development | Current Codex workspace |
-| [02](../.scratch/ginraidee/issues/02-add-restaurants.md) | P1 | Add/view restaurants and host persistent images | 01 | Todo | Developer |
+| [01](../.scratch/ginraidee/issues/01-local-bot.md) | P1 | Local bot receives signed commands | 00 | Done | Current Codex workspace |
+| [02](../.scratch/ginraidee/issues/02-add-restaurants.md) | P1 | Add/view restaurants and host persistent images | 01 | In development | Current Codex workspace |
 | [03](../.scratch/ginraidee/issues/03-edit-delete.md) | P1 | Edit/delete restaurants through group management | 02 | Todo | Developer |
 | [04](../.scratch/ginraidee/issues/04-start-selection.md) | P2 | Start or reuse a lunch selection | 02 | Todo | Developer |
 | [05](../.scratch/ginraidee/issues/05-vote.md) | P2 | Cast/change one vote per person | 04 | Todo | Developer |
@@ -53,8 +54,7 @@ Round counting and release gates are approved in the workflow. See
 ## Defect register
 
 No open defects are recorded. Card 01's initial review found incomplete durable
-webhook recovery; it was corrected and covered by a regression test. Independent
-testing, Docker smoke evidence, and manual LINE UAT are still pending.
+webhook recovery; it was corrected and covered by a regression test.
 
 | Bug | Affected card | Severity | Rounds used | Reproduction / evidence | Next action | Status |
 | --- | --- | --- | --- | --- | --- | --- |

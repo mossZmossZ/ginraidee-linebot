@@ -1,33 +1,47 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from datetime import datetime
 import hashlib
 import json
-from typing import Any
+from typing import Any, Callable
 
 from fastapi import FastAPI, HTTPException, Request, Response, status
+from fastapi.responses import FileResponse
 
 from app.commands import CommandHandler
 from app.config import Settings
-from app.database import Database, WebhookWork
+from app.database import Database, ManagementWork, WebhookWork
+from app.images import ImageFetcher, image_path, recover_unreferenced_images
 from app.security import has_valid_line_signature
 from app.transport import LineReplyTransport, NonRetryableReplyError, ReplyTransport
 
 
 def create_app(
-    settings: Settings | None = None, transport: ReplyTransport | None = None
+    settings: Settings | None = None,
+    transport: ReplyTransport | None = None,
+    image_fetcher: ImageFetcher | None = None,
+    clock: Callable[[], datetime] | None = None,
 ) -> FastAPI:
     resolved_settings = settings or Settings.from_environment()
-    database = Database(resolved_settings.database_path)
+    database = Database(resolved_settings.database_path, clock=clock)
+    image_directory = resolved_settings.image_directory or resolved_settings.database_path.parent / "images"
     command_handler = CommandHandler(
-        database, transport or LineReplyTransport(resolved_settings.channel_access_token)
+        database,
+        transport or LineReplyTransport(resolved_settings.channel_access_token),
+        image_fetcher=image_fetcher,
+        image_directory=image_directory,
+        public_base_url=resolved_settings.public_base_url,
     )
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         database.initialize()
+        recover_unreferenced_images(image_directory, database.referenced_image_ids())
         for work in database.resume_webhook_work():
             await _process_work(work, database, command_handler)
+        for work in database.resume_management_work():
+            await _process_management_work(work, database, command_handler)
         yield
 
     app = FastAPI(title="Ginraidee LINE Bot", lifespan=lifespan)
@@ -35,6 +49,13 @@ def create_app(
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.get("/images/{image_id}")
+    async def served_image(image_id: str) -> FileResponse:
+        path = image_path(image_directory, image_id)
+        if path is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+        return FileResponse(path, media_type="image/png")
 
     @app.post("/callback", status_code=status.HTTP_200_OK)
     async def callback(request: Request) -> Response:
@@ -74,15 +95,18 @@ async def _dispatch_event(
     ):
         return
     group_id = source.get("groupId")
+    user_id = source.get("userId")
     reply_token = event.get("replyToken")
     text = message.get("text")
-    if not isinstance(group_id, str) or not isinstance(reply_token, str) or text not in {
-        "@ginrai",
-        "@ginrai-manage",
-    }:
+    if not all(isinstance(value, str) for value in (group_id, user_id, reply_token, text)):
+        return
+    if text not in {"@ginrai", "@ginrai-manage"}:
+        work = database.claim_management_event(_event_id(event), group_id, user_id, reply_token, text)
+        if work is not None:
+            await _process_management_work(work, database, command_handler, raise_on_failure=True)
         return
 
-    work = database.claim_webhook_event(_event_id(event), group_id, reply_token, text)
+    work = database.claim_webhook_event(_event_id(event), group_id, user_id, reply_token, text)
     if work is None:
         return
     await _process_work(work, database, command_handler, raise_on_failure=True)
@@ -99,7 +123,7 @@ async def _process_work(
         if work.command == "@ginrai":
             await command_handler.handle_ginrai(work.group_id, work.reply_token)
         else:
-            await command_handler.handle_manage(work.group_id, work.reply_token)
+            await command_handler.handle_manage(work.group_id, work.user_id, work.reply_token)
     except NonRetryableReplyError:
         database.mark_webhook_processed(work.event_id)
         return
@@ -109,6 +133,28 @@ async def _process_work(
             raise
         return
     database.mark_webhook_processed(work.event_id)
+
+
+async def _process_management_work(
+    work: ManagementWork,
+    database: Database,
+    command_handler: CommandHandler,
+    *,
+    raise_on_failure: bool = False,
+) -> None:
+    try:
+        await command_handler.handle_management_input(
+            work.group_id, work.user_id, work.reply_token, work.text
+        )
+    except NonRetryableReplyError:
+        database.mark_management_processed(work.event_id)
+        return
+    except Exception:
+        database.mark_management_retry(work.event_id)
+        if raise_on_failure:
+            raise
+        return
+    database.mark_management_processed(work.event_id)
 
 
 def _event_id(event: dict[str, Any]) -> str:

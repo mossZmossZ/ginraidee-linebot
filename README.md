@@ -10,9 +10,8 @@ and image storage. Local and server deployments will use
 
 ## Project status
 
-Requirements and the development planning bundle are approved. Card 01 (the
-local bot foundation) is ready to begin; application code, Compose files, and
-testing have not started.
+Card 01 (the local bot foundation) is complete by project-owner confirmation.
+Card 02 (group restaurant catalogs and hosted images) is in development.
 
 ## Planning documents
 
@@ -33,6 +32,9 @@ Prerequisites: Docker Desktop and credentials from a LINE Messaging API channel.
 
 1. Copy `.env.example` to `.env` and set `LINE_CHANNEL_SECRET` and
    `LINE_CHANNEL_ACCESS_TOKEN`. Keep `.env` private; it is ignored by Git.
+   When testing restaurant images through a public HTTPS tunnel, also set
+   `APP_PUBLIC_BASE_URL` to that tunnel's HTTPS URL so LINE can retrieve the
+   backend-hosted images.
 2. Start the bot with `docker compose up --build`.
 3. Confirm `http://localhost:8000/healthz` returns `{"status":"ok"}`.
 4. Configure a public HTTPS tunnel to `http://localhost:8000/callback` in the

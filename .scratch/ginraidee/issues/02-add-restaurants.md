@@ -1,10 +1,10 @@
 # 02 — Add and view group restaurants with persistent images
 
 **Phase:** P1
-**Status:** Todo
+**Status:** In development
 **Blocked by:** [01 — Run a local bot that safely receives group commands](01-local-bot.md)
-**Owner:** Separate `terra`, high chat when the card is Ready
-**Developer/tester rounds used:** 0 / 3
+**Owner:** Current Codex workspace
+**Developer/tester rounds used:** 1 / 3
 
 ## What to build
 
@@ -12,10 +12,10 @@ Any group member adds a restaurant through the guided chat flow and sees its nam
 
 ## Todo
 
-- [ ] Implement guided Add and list/preview interactions with per-user/group sessions.
-- [ ] Fetch and validate supplied HTTPS image URLs with bounded safe network access.
-- [ ] Store image files and restaurant records consistently on persistent storage.
-- [ ] Serve only validated image files through the public image endpoint.
+- [x] Implement guided Add and list/preview interactions with per-user/group sessions.
+- [x] Fetch and validate supplied HTTPS image URLs with bounded safe network access.
+- [x] Store image files and restaurant records consistently on persistent storage.
+- [x] Serve only validated image files through the public image endpoint.
 
 ## Acceptance criteria
 
@@ -34,11 +34,26 @@ Manual check: Two members add restaurants in a real group, view the images, and 
 
 ## Evidence and handoff
 
-No implementation or verification evidence yet.
+Developer environment: current Codex workspace, Python 3.12.13 via `uv`.
+
+Implemented the Thai guided Add/List flow, scoped management sessions, normalized
+backend-hosted PNG files, opaque image serving, HTTPS-only image retrieval with
+DNS/redirect/private-address checks, and per-group normalized-name uniqueness.
+
+Focused checks run:
+
+- `uv run --group dev pytest -q` — 19 passed.
+- `uv run --group dev ruff check .` — passed.
+- Isolated Docker Compose smoke check — image built; container became healthy;
+  `/data/ginraidee.db` remained present after `docker compose restart bot`.
+  The temporary container and network were stopped; its named volume was kept.
+
+Manual check: not run; requires two real group members, a configured public HTTPS
+endpoint, and the project owner's LINE credentials.
 
 | Round | Developer submission / checks | Tester result | Findings / next action |
 | --- | --- | --- | --- |
-| — | Not started | Not run | — |
+| 1 | Guided flow, image-safety controls, storage, endpoint, durable receipts, and recoverable orphan handling implemented; checks recorded above | Not run | Await independent tester verification and required real LINE check. |
 
 Tech-lead review: Not recorded.
 CEO/manual disposition: Not recorded.
