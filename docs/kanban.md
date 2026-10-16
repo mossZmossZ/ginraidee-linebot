@@ -52,7 +52,9 @@ Round counting and release gates are approved in the workflow. See
 
 ## Defect register
 
-No defects have been observed: code has not been written or tested.
+No open defects are recorded. Card 01's initial review found incomplete durable
+webhook recovery; it was corrected and covered by a regression test. Independent
+testing, Docker smoke evidence, and manual LINE UAT are still pending.
 
 | Bug | Affected card | Severity | Rounds used | Reproduction / evidence | Next action | Status |
 | --- | --- | --- | --- | --- | --- | --- |
