@@ -15,7 +15,7 @@ An operator starts the Dockerized bot locally, and a signed LINE group command r
 - [x] Add the Python/FastAPI application, pinned dependencies and local Compose setup.
 - [x] Add configuration, health checking and SQLite initialization on persistent storage.
 - [x] Validate the raw-body webhook signature and route exact group commands.
-- [ ] Add focused signed-webhook and container startup checks.
+- [x] Add focused signed-webhook and container startup checks.
 
 ## Acceptance criteria
 
@@ -49,20 +49,23 @@ Focused checks run:
 - `uv run --group dev pytest` — 8 passed (one upstream Starlette deprecation
   warning).
 - `LINE_CHANNEL_SECRET=compose-check-secret LINE_CHANNEL_ACCESS_TOKEN=compose-check-token docker compose config` — passed.
-- Docker image build — not run: the local Docker daemon was unavailable
-  (`~/.orbstack/run/docker.sock` did not exist).
+- Docker 29.4.0 smoke check with placeholder credentials — image build passed;
+  `docker compose up -d` reached a healthy `/healthz` response; SQLite was
+  present in `/data`; after `docker compose restart bot`, `/healthz` remained
+  healthy and the database file remained present. The test container was then
+  stopped with `docker compose down` without deleting the named volume.
 
 Manual LINE check: not run; requires the CEO's credentials and a public HTTPS
 tunnel.
 
 | Round | Developer submission / checks | Tester result | Findings / next action |
 | --- | --- | --- | --- |
-| 1 | FastAPI/Docker foundation, durable webhook-work recovery, and focused checks recorded above | Not run | Await independent tester verification and local Docker smoke test once the daemon is running. |
+| 1 | FastAPI/Docker foundation, durable webhook-work recovery, and focused checks recorded above | Not run | Await independent tester verification and CEO/manual LINE check through a public HTTPS tunnel. |
 
 Tech-lead review: Two-axis review found durable webhook recovery incomplete;
 the work item is now stored atomically with its group effect and resumes after
 a failed delivery/restart. Final review remains pending independent tester and
-Docker smoke evidence.
+CEO/manual LINE evidence.
 CEO/manual disposition: Not recorded.
 Linked bugs / continuation: None recorded.
 
