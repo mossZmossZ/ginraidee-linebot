@@ -26,3 +26,19 @@ testing have not started.
 Start with the implementation plan and board. The public production hostname
 and HTTPS termination approach are intentionally deferred until the production
 deployment card; they do not block local development.
+
+## Local development (Card 01)
+
+Prerequisites: Docker Desktop and credentials from a LINE Messaging API channel.
+
+1. Copy `.env.example` to `.env` and set `LINE_CHANNEL_SECRET` and
+   `LINE_CHANNEL_ACCESS_TOKEN`. Keep `.env` private; it is ignored by Git.
+2. Start the bot with `docker compose up --build`.
+3. Confirm `http://localhost:8000/healthz` returns `{"status":"ok"}`.
+4. Configure a public HTTPS tunnel to `http://localhost:8000/callback` in the
+   LINE Developers Console, then add the bot to a test group and send
+   `@ginrai`. An empty group receives the Thai prompt to use `@ginrai-manage`.
+
+The `ginraidee_data` named volume holds the SQLite database. `docker compose
+down` keeps it; do not use `docker compose down --volumes` when checking
+persistence. Stop the local bot with `docker compose down`.

@@ -1,7 +1,7 @@
 # 01 — Run a local bot that safely receives group commands
 
 **Phase:** P1
-**Status:** Ready
+**Status:** In development
 **Blocked by:** None — card 00 is complete.
 **Owner:** Separate `terra`, high chat
 **Developer/tester rounds used:** 0 / 3
@@ -34,13 +34,30 @@ Manual check: Operator starts the local container and sends an initial command i
 
 ## Evidence and handoff
 
-No implementation or verification evidence yet.
+Developer environment: current Codex workspace, Python 3.12.13 via `uv`.
+
+Implemented the FastAPI webhook service, HMAC signature verification, exact
+group-command dispatch, initial Thai replies, SQLite initialization and durable
+webhook receipts. Added Docker/Compose configuration, private environment-file
+handling, and local startup instructions.
+
+Focused checks run:
+
+- `uv run --group dev ruff check .` — passed.
+- `uv run --group dev pytest` — 7 passed (one upstream Starlette deprecation
+  warning).
+- `LINE_CHANNEL_SECRET=compose-check-secret LINE_CHANNEL_ACCESS_TOKEN=compose-check-token docker compose config` — passed.
+- Docker image build — not run: the local Docker daemon was unavailable
+  (`~/.orbstack/run/docker.sock` did not exist).
+
+Manual LINE check: not run; requires the CEO's credentials and a public HTTPS
+tunnel.
 
 | Round | Developer submission / checks | Tester result | Findings / next action |
 | --- | --- | --- | --- |
-| — | Not started | Not run | — |
+| 1 | FastAPI/Docker foundation and focused checks recorded above | Not run | Await independent tester verification and local Docker smoke test once the daemon is running. |
 
-Tech-lead review: Not recorded.
+Tech-lead review: Pending implementation review.
 CEO/manual disposition: Not recorded.
 Linked bugs / continuation: None recorded.
 
@@ -48,4 +65,3 @@ See the [workflow](../../../docs/development-workflow.md),
 [implementation plan](../../../docs/implementation-plan.md), and
 [board](../../../docs/kanban.md). Criteria depending on D1–D8 rules must follow
 the decisions recorded in card 00.
-

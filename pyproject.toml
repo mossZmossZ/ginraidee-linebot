@@ -1,0 +1,29 @@
+[project]
+name = "ginraidee-linebot"
+version = "0.1.0"
+description = "A LINE group bot for choosing where to eat lunch."
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "fastapi==0.115.12",
+  "httpx==0.28.1",
+  "uvicorn[standard]==0.34.0",
+]
+
+[build-system]
+requires = ["setuptools==75.8.0"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+  "pytest==8.3.5",
+  "ruff==0.11.2",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

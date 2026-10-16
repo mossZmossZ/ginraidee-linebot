@@ -1,0 +1,1 @@
+"""Ginraidee LINE bot application."""
