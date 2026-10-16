@@ -3,7 +3,7 @@
 **Phase:** P2
 **Status:** Todo
 **Blocked by:** [04 — Start or reuse a restaurant selection](04-start-selection.md)
-**Owner:** Unassigned; requested developer/tester models remain pending confirmation
+**Owner:** Separate `terra`, high chat when the card is Ready
 **Developer/tester rounds used:** 0 / 3
 
 ## What to build
@@ -47,6 +47,6 @@ Linked bugs / continuation: None recorded.
 
 See the [workflow](../../../docs/development-workflow.md),
 [implementation plan](../../../docs/implementation-plan.md), and
-[board](../../../docs/kanban.md). Criteria depending on proposed D1–D7 rules
+[board](../../../docs/kanban.md). Criteria depending on D1–D8 rules
 must follow the decisions recorded in card 00.
 

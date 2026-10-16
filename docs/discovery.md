@@ -1,12 +1,12 @@
 # LINE application discovery
 
-Status: Core requirements captured; implementation planning bundle drafted for review
+Status: Requirements and operating decisions approved for implementation
 Started: 2026-10-15
 
 Next documents: [implementation plan and phases](implementation-plan.md),
 [Kanban board and cards](kanban.md), [development workflow](development-workflow.md),
-and [manual UAT](uat.md). Planning is written; application implementation and
-agent execution have not started.
+and [manual UAT](uat.md). Card 00 approved the plan on 2026-10-16; application
+implementation and testing have not started.
 
 ## Confirmed scope
 
@@ -119,8 +119,9 @@ confirmed first-release scope.
   message with two choices and server-managed votes instead of a native LINE
   group poll.
 
-Whether other people deploy their own bots or use a shared hosted bot remains
-unresolved. An open-source license has not yet been chosen.
+Each operator deploys their own bot using their own LINE credentials. The
+repository uses the MIT License. The project owner will choose the public
+hostname and HTTPS termination approach before production deployment.
 
 ## Confirmed technology and deployment requirements
 
@@ -146,10 +147,10 @@ connectivity have not yet been decided.
 | Developer | `terra` | High | Implement the work and fix reported defects |
 | Tester | `terra` | High | Test the application and report defects |
 
-Model names above preserve the user's wording. Exact model identifiers and
-availability must be resolved before configuring or starting agents. No model
-substitution is approved. Whether the CEO is the user or an agent, and who
-performs manual tests, still needs clarification.
+The project owner is the CEO and performs real LINE manual acceptance testing.
+The current Codex chat is tech lead until handoff. A separate `terra`, high
+reasoning chat performs developer and tester work; each card records its actual
+execution environment.
 
 ## Confirmed development workflow
 
@@ -161,30 +162,29 @@ performs manual tests, still needs clarification.
 6. If the issue cannot be fixed within the limit, record it as Pending and Bug,
    hold the fix, and preserve it for later continuation.
 
-The exact meaning of one loop, where cards are stored, the reporting format,
-and whether unresolved defects block a phase or release are still undecided.
-This records the requested process; implementation and agent execution have
-not started.
+One loop is a developer implementation/fix submission followed by tester
+verification; it is recorded in repository-local Markdown cards. A maximum of
+three rounds applies to each card. A failed third round creates a linked Bug
+and keeps the parent Pending; Pending required work blocks dependents and
+release unless the project owner explicitly accepts a reduced scope.
 
-## Consolidated remaining decisions
+## Approved operating decisions
 
-The main product behavior is captured above. The following proposals are not
-confirmed requirements and do not authorize implementation or agent execution.
-There is no active one-at-a-time interview question.
+Card 00 approved the following rules on 2026-10-16. The public production
+hostname remains deferred to card 07 and does not block local development.
 
-| Area | Proposed default or unresolved decision |
+| Area | Approved decision |
 | --- | --- |
-| Empty catalog and daily selection | Propose an add-restaurants prompt for an empty catalog, one final selection per group per day (including a sole restaurant), and allowing restaurants to repeat on later days. |
-| Poll completion and catalog changes | Propose an automatic result message at noon for a previously started poll; retain the original restaurant names and images for that poll when the catalog changes. |
-| Management flow | Propose a separate session per group member, cancellation and expiry, and confirmation before deletion. |
-| Distribution and hosting | Independent deployment with each operator's own LINE credentials was recommended but remains unanswered. Server domain, HTTPS setup, and open-source license remain undecided. |
-| Development roles | CEO identity, manual testing ownership, and exact `sol`/`terra` model identifiers need confirmation before agents run. |
-| Cards and defect loop | Propose Markdown cards in the repo, with acceptance criteria; one loop means implementation/fix followed by tester verification, at most three rounds per card. Remaining defects become Pending/Bug. Release-blocking rules remain undecided. |
+| Empty catalog and daily selection | Show an add-restaurants prompt for an empty catalog; create one final selection per group per Bangkok day (including a sole restaurant); allow restaurants to repeat on later days. |
+| Poll completion and catalog changes | Automatically announce the result at noon for an `@ginrai` poll; retain original restaurant names and images in poll snapshots after catalog edits/deletions. |
+| Management flow | Use separate sessions per group member, Cancel, 10-minute inactivity expiry, deletion confirmation, and Thai first-release message text. |
+| Distribution and hosting | Operators deploy independently with their own credentials; the repository is MIT licensed. The project owner chooses the server domain and HTTPS setup before production deployment. |
+| Development roles | The project owner is CEO and manual LINE-UAT owner. The current Codex chat is tech lead until handoff; a separate `terra`, high chat performs development and testing. |
+| Cards and defect loop | Use repository Markdown cards with acceptance criteria; one loop is implementation/fix plus verification; maximum three rounds; remaining defects become linked Pending/Bug work and hold dependencies/releases unless the project owner approves reduced scope. |
+| Late, duplicate, and out-of-order webhooks | Persist a verified stable event identifier before effects; duplicates are idempotent. Use authoritative server processing time for command/vote deadlines, rejecting post-deadline writes regardless of event timestamp. |
 
-The implementation plan now proposes image download validation/limits,
-retention handling, minimal user identifiers, backups, restart recovery, webhook
-verification/duplicate handling, and acceptance checks together. Material product
-choices are collected in its D1–D7 review table and card 00. Writing that plan
-does not turn the proposals into accepted requirements or authorize agent
-execution. Repository-local draft cards fulfill the requested planning work;
-retaining that tracker for development remains part of the consolidated review.
+The implementation plan defines image download validation/limits, 90-day
+operational-record retention, minimal user identifiers, backups, restart
+recovery, webhook verification/duplicate handling, and acceptance checks.
+Card 00 authorizes the first implementation card; the tracker remains
+repository-local for development.

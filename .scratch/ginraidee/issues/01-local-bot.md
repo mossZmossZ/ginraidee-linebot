@@ -1,9 +1,9 @@
 # 01 — Run a local bot that safely receives group commands
 
 **Phase:** P1
-**Status:** Todo
-**Blocked by:** [00 — Review the implementation plan and operating decisions](00-review-plan.md)
-**Owner:** Unassigned; requested developer/tester models remain pending confirmation
+**Status:** Ready
+**Blocked by:** None — card 00 is complete.
+**Owner:** Separate `terra`, high chat
 **Developer/tester rounds used:** 0 / 3
 
 ## What to build
@@ -46,6 +46,6 @@ Linked bugs / continuation: None recorded.
 
 See the [workflow](../../../docs/development-workflow.md),
 [implementation plan](../../../docs/implementation-plan.md), and
-[board](../../../docs/kanban.md). Criteria depending on proposed D1–D7 rules
-must follow the decisions recorded in card 00.
+[board](../../../docs/kanban.md). Criteria depending on D1–D8 rules must follow
+the decisions recorded in card 00.
 

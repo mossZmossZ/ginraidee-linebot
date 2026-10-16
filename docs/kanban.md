@@ -1,6 +1,6 @@
 # Development Kanban
 
-Status: P0 review is in progress. No application implementation or testing has started.
+Status: P0 approved. No application implementation or testing has started.
 
 The board and [individual cards](../.scratch/ginraidee/issues/) form the local
 planning tracker. Cards are not published to GitHub or another external tracker.
@@ -10,18 +10,18 @@ Dependencies and review gates must be satisfied before moving a card to Ready.
 
 | Backlog / Todo | Ready | In development | In testing | Tech lead / CEO review | Pending / Bug | Done |
 | --- | --- | --- | --- | --- | --- | --- |
-| 01–10: see card list below | — | — | — | 00: Plan and operating decisions | — | — |
+| 02–10: see card list below | 01: Local bot | — | — | — | — | 00: Plan and operating decisions |
 
-The discovery document and this planning bundle are written; that does not mark
-an application card Done. Card 00 remains in review until the plan and decisions
-are confirmed. No models have been assigned or started.
+The planning bundle alone does not mark an application card Done. Card 00 was
+accepted on 2026-10-16; card 01 is now Ready. Application code and testing have
+not started.
 
 ## Cards and dependencies
 
 | Card | Phase | Deliverable | Blocked by | Status | Role on start |
 | --- | --- | --- | --- | --- | --- |
-| [00](../.scratch/ginraidee/issues/00-review-plan.md) | P0 | Confirm scope, defaults, people/models, workflow | None | Review | CEO + tech lead |
-| [01](../.scratch/ginraidee/issues/01-local-bot.md) | P1 | Local bot receives signed commands | 00 | Todo | Developer |
+| [00](../.scratch/ginraidee/issues/00-review-plan.md) | P0 | Confirm scope, defaults, people/models, workflow | None | Done | Project owner + current Codex chat |
+| [01](../.scratch/ginraidee/issues/01-local-bot.md) | P1 | Local bot receives signed commands | 00 | Ready | Separate `terra`, high chat |
 | [02](../.scratch/ginraidee/issues/02-add-restaurants.md) | P1 | Add/view restaurants and host persistent images | 01 | Todo | Developer |
 | [03](../.scratch/ginraidee/issues/03-edit-delete.md) | P1 | Edit/delete restaurants through group management | 02 | Todo | Developer |
 | [04](../.scratch/ginraidee/issues/04-start-selection.md) | P2 | Start or reuse a lunch selection | 02 | Todo | Developer |
@@ -46,8 +46,8 @@ selection; integration with edits/deletions is verified before production.
 6. Only accepted work becomes Done. A failed third round becomes Pending,
    with a linked Bug, reproduction, and continuation notes.
 
-Round counting and release gates are proposed in the workflow until card 00 is
-accepted. See [development-workflow.md](development-workflow.md) for the full rule.
+Round counting and release gates are approved in the workflow. See
+[development-workflow.md](development-workflow.md) for the full rule.
 
 ## Defect register
 

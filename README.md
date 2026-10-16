@@ -10,8 +10,9 @@ and image storage. Local and server deployments will use
 
 ## Project status
 
-Requirements and the development planning bundle are written. P0 is in review;
-application code, Compose files, agent execution, and testing have not started.
+Requirements and the development planning bundle are approved. Card 01 (the
+local bot foundation) is ready to begin; application code, Compose files, and
+testing have not started.
 
 ## Planning documents
 
@@ -22,5 +23,6 @@ application code, Compose files, agent execution, and testing have not started.
 - [Roles, review workflow, and three-round defect limit](docs/development-workflow.md)
 - [Manual acceptance checklist](docs/uat.md)
 
-Start with the implementation plan and board. Proposed defaults and unresolved
-choices are marked for review rather than silently added to the requirements.
+Start with the implementation plan and board. The public production hostname
+and HTTPS termination approach are intentionally deferred until the production
+deployment card; they do not block local development.

@@ -1,10 +1,9 @@
 # Implementation plan
 
-Status: Draft for review; application development has not started.
+Status: Approved for implementation on 2026-10-16; application development has not started.
 
-This plan implements the [confirmed requirements](discovery.md). It proposes
-the remaining operating rules together so they can be reviewed once. Proposed
-rules are not treated as approved requirements.
+This plan implements the [confirmed requirements](discovery.md) and the
+operating decisions approved in card 00.
 
 ## Deliverable
 
@@ -34,25 +33,28 @@ Actual mention-list support, native LINE polls, a management website, direct
 photo uploads, dish catalogs, AI-generated recommendations, and scheduled
 creation of polls are outside the confirmed first-release scope.
 
-## Decisions to review together
+## Approved operating decisions
 
-These are proposed defaults unless explicitly identified as unresolved. Record
-the final decisions in card 00 before dependent implementation begins.
+Card 00 approved these decisions on 2026-10-16. They are implementation
+requirements, not suggestions. The production hostname remains intentionally
+deferred: it is not needed for local development and must be chosen before the
+production release gate.
 
-| ID | Area | Proposed default / required decision |
+| ID | Area | Approved decision |
 | --- | --- | --- |
 | D1 | Edge cases and daily selection | Empty list: explain how to add restaurants. One final selection per group per Bangkok calendar day, including a single-restaurant result. Restaurants may appear again on later days. |
 | D2 | Result delivery and restaurant changes | Announce results automatically at noon only for polls started by `@ginrai`. Keep poll choices as snapshots so edits/deletions do not change an existing vote. Closing a started poll is separate from creating a scheduled poll. |
-| D3 | Management sessions | Isolate sessions by group and user; provide Cancel; expire after 10 minutes of inactivity; confirm deletions; reject blank names and duplicates after trimming/case normalization. Choose message language during review. |
-| D4 | Deployment and license | Propose independent deployment using each operator's own LINE credentials. Server hostname, HTTPS termination, and open-source license are unresolved. Do not publish a release before choosing a license. |
-| D5 | People and models | Preserve `sol` with high effort for tech lead and `terra` with high effort for developer/tester. Confirm exact available model identifiers, CEO identity, and human manual-testing ownership before starting those roles. No model substitutions are approved. |
-| D6 | Workflow and release gate | Propose repo Markdown cards; one round is developer implementation/fix followed by tester verification. Maximum three rounds per card. After a failed third round, create a linked Bug and set the card Pending. Required acceptance failures hold the dependent work/release unless CEO explicitly accepts a reduced scope. |
-| D7 | Data and image lifecycle | Propose minimal group/user identifiers without chat transcripts; keep operational poll history until a retention period is agreed. Keep images referenced by current restaurants or retained poll snapshots; clean unreferenced files safely. Agree retention before production. |
+| D3 | Management sessions | Isolate sessions by group and user; provide Cancel; expire after 10 minutes of inactivity; confirm deletions; reject blank names and duplicates after trimming/case normalization. First-release bot messages are Thai. Keep message text centralized so a later language option does not alter domain rules. |
+| D4 | Deployment and license | Each operator deploys independently with its own LINE credentials. Use the MIT License for the repository. The project owner chooses the public hostname and HTTPS termination approach before card 07 is accepted; this does not block local development. |
+| D5 | People and models | The project owner is the CEO and owns final scope/release decisions and real LINE UAT. A separate Codex chat using `terra` with high reasoning performs the developer and tester roles. The current Codex chat is tech lead until handoff; each card records the actual execution environment. |
+| D6 | Workflow and release gate | Use repository Markdown cards. One round is developer implementation/fix followed by tester verification. Maximum three rounds per card. After a failed third round, create a linked Bug and set the card Pending. Required acceptance failures hold dependent work and release unless the project owner explicitly accepts a reduced scope. |
+| D7 | Data and image lifecycle | Store only necessary group/user identifiers, never chat transcripts. Retain completed poll and delivery records for 90 days, then safely delete them. Keep images referenced by current restaurants or retained poll snapshots; remove unreferenced files through a recoverable cleanup process. Backups preserve the SQLite database and referenced image files together. |
+| D8 | Late, duplicate, and out-of-order webhooks | Verify signatures and persist a stable event identifier before effects. Duplicate identifiers produce no additional effects. Apply commands and votes by authoritative server processing time, not a client/event timestamp; at or after a poll deadline, reject writes even if the event was generated earlier. Existing poll/session version checks and database constraints govern otherwise out-of-order events. |
 
-## Proposed architecture
+## Implementation architecture
 
 Use a small single-server application rather than several independently
-deployed application services. The following are implementation proposals.
+deployed application services.
 
 ```mermaid
 flowchart LR
@@ -76,7 +78,7 @@ flowchart LR
 - Use SQLite transactions and constraints to enforce group ownership, one open
   poll, one vote per user/poll, and unique webhook processing. Do not rely only
   on process memory for these rules.
-- Propose one application worker and one active closer for the initial
+- Use one application worker and one active closer for the initial
   single-server deployment. Store due times in SQLite, scan for due polls, and
   recover them at startup. A process restart must not lose the schedule.
 - Persist a poll's winner once. Persist outgoing result work with a stable
@@ -87,14 +89,16 @@ flowchart LR
 - Reject vote writes when authoritative server time is at or after the stored
   deadline, even if the closure task has not run. Store instants consistently
   and derive lunch dates/deadlines using Asia/Bangkok. Use an injectable clock
-  for deadline tests; decide the handling of late/out-of-order webhooks in 00.
+  for deadline tests. Apply the D8 server-time and idempotency rules to late,
+  duplicate, and out-of-order webhooks.
 - Use an OS-backed random generator for uniform sampling without replacement;
-  do not weight restaurants. Confirm the proposed randomness implementation
-  during review; deterministic fake randomness belongs only in tests.
+  do not weight restaurants. Deterministic fake randomness belongs only in
+  tests.
 - Use generated image IDs rather than user-supplied filenames. Validate URLs,
   resolved destinations and redirects to reject private/local network access;
-  bound time, bytes, redirects, and decoded dimensions. Propose JPEG/PNG input,
-  a 5 MB download limit, 10-second fetch timeout, and at most three redirects.
+  bound time, bytes, redirects, and decoded dimensions. Accept JPEG/PNG input,
+  limit downloads to 5 MB, time out after 10 seconds, and allow at most three
+  redirects.
   Validate actual decoded images and strip embedded metadata when re-encoding.
 - Store images as files and their references in SQLite. Never expose the
   database or the whole data directory through static hosting. Publish only
@@ -103,7 +107,7 @@ flowchart LR
   Use atomic file writes and a recoverable cleanup policy for interrupted saves.
   Design backup/restore to preserve both SQLite and referenced image files.
 
-## Proposed data model
+## Data model
 
 | Record | Purpose and constraints |
 | --- | --- |
@@ -126,14 +130,14 @@ All task details and dependencies are in the [Kanban board](kanban.md).
 
 | Phase | Cards | Expected demonstration / exit condition |
 | --- | --- | --- |
-| P0 — Review | 00 | Review remaining defaults and identify the people/models executing the workflow. |
+| P0 — Review | 00 | Completed: operating decisions, responsibilities, and workflow approved. |
 | P1 — Bot and catalog | 01–03 | Start locally; process a signed group command; add, view, edit, and delete group restaurants with persistent images. |
 | P2 — Selection and voting | 04–05 | Select eligible choices, handle one restaurant, reuse an open poll, cast and change votes safely. |
 | P3 — Noon completion | 06 | Close at Bangkok noon, resolve normal/tie/no-vote outcomes, recover after restart, and deliver a stable result. |
 | P4 — Deployment and qualification | 07–09 | Run the standalone production Compose setup, verify isolation/recovery, and give another operator complete setup documentation. |
 | P5 — Manual acceptance | 10 | Tech lead and CEO review evidence and record manual UAT and release decisions. |
 
-- [ ] P0: Review card 00 and update this plan with accepted decisions.
+- [x] P0: Review card 00 and update this plan with accepted decisions.
 - [ ] P1: Complete 01, 02, and 03 through developer/tester review.
 - [ ] P2: Complete 04 and 05 through developer/tester review.
 - [ ] P3: Complete 06, including restart and boundary-time tests.
@@ -141,8 +145,8 @@ All task details and dependencies are in the [Kanban board](kanban.md).
 - [ ] P5: Complete 10 with recorded manual results and defect disposition.
 
 The phases describe delivery milestones, not separate teams. Work the first
-card whose dependencies are Done; do not launch agents until roles/models and
-the plan are confirmed. There are no date or completion-time commitments yet.
+card whose dependencies are Done. Card 01 is now the first Ready card. There
+are no date or completion-time commitments yet.
 
 ## Validation and completion
 

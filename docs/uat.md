@@ -4,8 +4,8 @@ Status: Planned; no checks have been executed.
 
 Use this with card 10 and record the tester, CEO/tech-lead reviewer, environment,
 revision, Bangkok date/time, actual result and evidence for each scenario.
-Mark a row N/A only with an explicit scope decision. Proposals marked D1–D7 in
-the implementation plan must be resolved before testing those behaviors.
+Mark a row N/A only with an explicit scope decision. The D1–D8 decisions in
+the implementation plan govern the related test behaviors.
 
 ## Prerequisites
 

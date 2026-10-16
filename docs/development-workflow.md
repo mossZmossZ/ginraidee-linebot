@@ -1,20 +1,20 @@
 # Development workflow
 
-Status: Requested roles and three-round cap recorded; operational details are
-proposed for review in card 00. No agents have been launched.
+Status: Approved in card 00 on 2026-10-16. No application implementation or
+testing has started.
 
 ## Roles
 
 | Role | Model / effort requested | Responsibility |
 | --- | --- | --- |
-| CEO | Identity/model unresolved | Set direction, resolve material product decisions, review manual evidence and accept delivery. |
-| Tech lead | `sol`, high | Own plan, phases, cards, expected functionality, dependencies, code review and reports. |
-| Developer | `terra`, high | Implement one card, run focused checks, fix verified defects and record evidence. |
-| Tester | `terra`, high | Independently verify acceptance criteria, test failures/boundaries, and report reproducible findings. |
+| Project owner (CEO) | Human | Set direction, resolve material product decisions, perform real LINE UAT, review manual evidence and accept delivery. |
+| Tech lead | Current Codex chat | Own plan, phases, cards, expected functionality, dependencies, code review and reports until handoff. |
+| Developer | Separate `terra`, high chat | Implement one card, run focused checks, fix verified defects and record evidence. |
+| Tester | Separate `terra`, high chat | Verify acceptance criteria, test failures/boundaries, and report reproducible findings. |
 
-Resolve exact model identifiers and availability before execution. Preserve the
-requested models; do not silently substitute a different family. Confirm who
-performs manual LINE testing. Planning documents do not start the agent team.
+The project owner performs real LINE testing. Record actual commands,
+revisions, checks, and execution environment in each card. Planning approval
+does not itself claim that application work has started.
 
 ## Per-card execution
 
@@ -30,12 +30,12 @@ performs manual LINE testing. Planning documents do not start the agent team.
 7. If the third round fails, stop that loop. Mark the card Pending, create a Bug,
    and preserve a concrete continuation note. Report it to tech lead and CEO.
 
-Proposed definition: one round is one developer implementation/fix submission
+Definition: one round is one developer implementation/fix submission
 followed by tester verification. The first submission is round 1; at most two
 further fix-and-verification submissions remain. Failed verification is not an
 excuse to create a new parent card and reset the count.
 
-Proposed dependency/release rule: a Pending card does not unblock dependents.
+Dependency/release rule: a Pending card does not unblock dependents.
 Independent cards may proceed; failed required criteria hold release unless the
 CEO explicitly accepts and documents a reduced scope. Resuming a held fix needs
 a recorded decision and bounded follow-up work; do not continue automatically
