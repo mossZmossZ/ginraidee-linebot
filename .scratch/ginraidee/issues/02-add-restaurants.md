@@ -52,15 +52,38 @@ Focused checks run:
 - `docker compose config` with placeholder credentials — passed.
 - `docker compose build` — passed; the resulting image does not install Pillow.
 
-Manual check: not run; requires two real group members, a configured public HTTPS
-endpoint, and the project owner's LINE credentials.
+Tech-lead automated spot-check on 2026-10-16 at revision `eb195cc`:
+
+- `UV_CACHE_DIR=/private/tmp/ginraidee-uv-cache uv run --offline --group dev pytest -q tests/test_catalog.py tests/test_webhook.py` — 23 passed (one upstream Starlette deprecation warning).
+- `UV_CACHE_DIR=/private/tmp/ginraidee-uv-cache uv run --offline --group dev ruff check .` — passed.
+
+Container-replacement check on 2026-10-16 at revision `eb195cc`: built the app
+image and used isolated Compose project `ginraidee-card02-verify-28996` with
+placeholder LINE credentials. Seeded one restaurant and its HTTPS image URL
+into the named volume, removed the app container, then started a replacement
+container using the same volume. The app health check passed before and after;
+the restaurant name and original URL remained in SQLite. The temporary
+containers, network, and volume were removed. No LINE API call was made.
+
+These local checks are not the separate tester verification required by the
+workflow and do not verify real LINE behavior. The project owner separately
+reported that real LINE testing was complete and signed off in Codex chat on
+2026-10-16; specific test details were not included.
+
+Manual check: the project owner reported that real LINE testing was already
+complete and gave signoff in Codex chat on 2026-10-16. Specific participants,
+scenarios, and observations were not included in the message.
 
 | Round | Developer submission / checks | Tester result | Findings / next action |
 | --- | --- | --- | --- |
-| 1 | Guided flow, malformed/HTTP URL rejection, paginated catalog previews, SQLite URL storage, direct LINE image messages, and durable receipts implemented; automated checks recorded above | Not run | Await independent tester verification and required real LINE check. |
+| 1 | Guided flow, malformed/HTTP URL rejection, paginated catalog previews, SQLite URL storage, direct LINE image messages, and durable receipts implemented; automated checks recorded above | Not run | Await independent tester verification. Project owner reports real LINE testing complete and signed off; detailed evidence was not supplied. |
 
-Tech-lead review: Not recorded.
-CEO/manual disposition: Not recorded.
+Tech-lead review: Automated checks and isolated container-replacement check
+recorded above; formal review after independent tester verification remains
+pending.
+CEO/manual disposition: Project owner provided signoff in Codex chat on
+2026-10-16 and reported that testing was already complete; detailed results
+were not supplied.
 Linked bugs / continuation: None recorded.
 
 See the [workflow](../../../docs/development-workflow.md),
