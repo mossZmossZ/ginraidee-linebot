@@ -14,7 +14,10 @@ respectively.
 ## Project status
 
 Card 01 (the local bot foundation) is complete by project-owner confirmation.
-Card 02 (group restaurant catalogs and image URLs) is in development.
+Card 02 (group restaurant catalogs and image URLs) is awaiting tester and
+manual LINE verification. Card 03 (restaurant editing and deletion) is in
+development under project-owner direction while Card 02 verification remains
+pending.
 
 ## Planning documents
 
@@ -45,3 +48,13 @@ Prerequisites: Docker Desktop and credentials from a LINE Messaging API channel.
 The `ginraidee_data` named volume holds the SQLite database. `docker compose
 down` keeps it; do not use `docker compose down --volumes` when checking
 persistence. Stop the local bot with `docker compose down`.
+
+## Restaurant management
+
+In a group, send `@ginraidee-bot manage` and choose `เพิ่ม` to add a restaurant,
+`รายการ` to view the catalog, `แก้ไข` to update a restaurant, or `ลบ` to delete
+one. Edit and delete list restaurant numbers; send the displayed number to
+select the entry. Edits require a new name and HTTPS image URL. Deletion takes
+effect only after `ยืนยัน`; send `ยกเลิก` at any step to leave the restaurant
+unchanged. Management sessions are scoped to the group and member and expire
+after 10 minutes of inactivity.

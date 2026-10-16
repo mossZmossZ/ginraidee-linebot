@@ -1,8 +1,9 @@
 # Development Kanban
 
-Status: Card 02 is in development. Card 01 is complete by project-owner
-confirmation; Card 02 remains subject to tester verification and its required
-manual LINE check.
+Status: Card 02 is in development, awaiting tester verification and its
+required manual LINE check. Card 03 implementation is in development under
+project-owner direction before Card 02's verification is complete. Card 01 is
+complete by project-owner confirmation.
 
 The board and [individual cards](../.scratch/ginraidee/issues/) form the local
 planning tracker. Cards are not published to GitHub or another external tracker.
@@ -12,11 +13,14 @@ Dependencies and review gates must be satisfied before moving a card to Ready.
 
 | Backlog / Todo | Ready | In development | In testing | Tech lead / CEO review | Pending / Bug | Done |
 | --- | --- | --- | --- | --- | --- | --- |
-| 03–10: see card list below | — | 02: Restaurant catalog | — | — | — | 00: Plan and operating decisions; 01: Local bot |
+| 04–10: see card list below | — | 02: Restaurant catalog; 03: Edit/delete restaurants (owner-authorized early start) | — | — | — | 00: Plan and operating decisions; 01: Local bot |
 
 The planning bundle alone does not mark an application card Done. Card 00 was
 accepted on 2026-10-16 and Card 01 was subsequently confirmed complete by the
-project owner. Card 02 has not yet passed its verification and manual gates.
+project owner. Card 02 has not passed its verification and manual gates. On
+2026-10-16, the project owner authorized Card 03 implementation to begin while
+Card 02 verification remains pending; this does not mark Card 02 Done or waive
+Card 03's review and manual acceptance gates.
 
 ## Cards and dependencies
 
@@ -25,7 +29,7 @@ project owner. Card 02 has not yet passed its verification and manual gates.
 | [00](../.scratch/ginraidee/issues/00-review-plan.md) | P0 | Confirm scope, defaults, people/models, workflow | None | Done | Project owner + current Codex chat |
 | [01](../.scratch/ginraidee/issues/01-local-bot.md) | P1 | Local bot receives signed commands | 00 | Done | Current Codex workspace |
 | [02](../.scratch/ginraidee/issues/02-add-restaurants.md) | P1 | Add/view restaurants and retain image URLs | 01 | In development | Current Codex workspace |
-| [03](../.scratch/ginraidee/issues/03-edit-delete.md) | P1 | Edit/delete restaurants through group management | 02 | Todo | Developer |
+| [03](../.scratch/ginraidee/issues/03-edit-delete.md) | P1 | Edit/delete restaurants through group management | 02 (owner-authorized implementation start before verification) | In development | Current Codex workspace by owner direction |
 | [04](../.scratch/ginraidee/issues/04-start-selection.md) | P2 | Start or reuse a lunch selection | 02 | Todo | Developer |
 | [05](../.scratch/ginraidee/issues/05-vote.md) | P2 | Cast/change one vote per person | 04 | Todo | Developer |
 | [06](../.scratch/ginraidee/issues/06-close-polls.md) | P3 | Close at noon and deliver/recover results | 05 | Todo | Developer |

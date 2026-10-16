@@ -89,7 +89,7 @@ def test_manage_command_reaches_its_own_entry_point(tmp_path: Path) -> None:
 
     assert response.status_code == 200
     assert transport.replies == [
-        ("reply-token", "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ หรือ ยกเลิก")
+        ("reply-token", "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ, แก้ไข, ลบ หรือ ยกเลิก")
     ]
 
 
@@ -110,8 +110,8 @@ def test_bot_name_commands_route_to_selection_and_management_entry_points(tmp_pa
     assert hyphenated_management.status_code == 200
     assert transport.replies == [
         ("reply-token", "ยังไม่มีร้านอาหารในกลุ่มนี้ พิมพ์ @ginraidee-bot manage เพื่อเพิ่มร้านอาหาร"),
-        ("reply-token", "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ หรือ ยกเลิก"),
-        ("reply-token", "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ หรือ ยกเลิก"),
+        ("reply-token", "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ, แก้ไข, ลบ หรือ ยกเลิก"),
+        ("reply-token", "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ, แก้ไข, ลบ หรือ ยกเลิก"),
     ]
 
 
@@ -211,5 +211,5 @@ def test_retrying_a_management_command_retains_its_member_scope(tmp_path: Path) 
 
     assert failed_delivery.status_code == 500
     assert recovered_transport.replies == [
-        ("reply-token", "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ หรือ ยกเลิก")
+        ("reply-token", "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ, แก้ไข, ลบ หรือ ยกเลิก")
     ]

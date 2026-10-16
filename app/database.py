@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 import sqlite3
+import uuid
 from typing import Callable, Iterator
 
 
@@ -30,15 +31,37 @@ class ManagementWork:
 
 
 class ManagementSession:
-    def __init__(self, step: str, draft_name: str | None) -> None:
+    def __init__(
+        self,
+        step: str,
+        draft_name: str | None,
+        draft_action: str | None,
+        selected_restaurant_id: int | None,
+        selected_restaurant_key: str | None,
+        selected_version: int | None,
+    ) -> None:
         self.step = step
         self.draft_name = draft_name
+        self.draft_action = draft_action
+        self.selected_restaurant_id = selected_restaurant_id
+        self.selected_restaurant_key = selected_restaurant_key
+        self.selected_version = selected_version
 
 
 class Restaurant:
-    def __init__(self, display_name: str, source_image_url: str) -> None:
+    def __init__(
+        self,
+        restaurant_id: int,
+        selection_key: str,
+        display_name: str,
+        source_image_url: str,
+        version: int,
+    ) -> None:
+        self.restaurant_id = restaurant_id
+        self.selection_key = selection_key
         self.display_name = display_name
         self.source_image_url = source_image_url
+        self.version = version
 
 
 class Database:
@@ -72,10 +95,12 @@ class Database:
 
                 CREATE TABLE IF NOT EXISTS restaurants (
                     restaurant_id INTEGER PRIMARY KEY,
+                    selection_key TEXT NOT NULL,
                     group_id TEXT NOT NULL REFERENCES groups(group_id),
                     display_name TEXT NOT NULL,
                     normalized_display_name TEXT NOT NULL,
                     source_image_url TEXT NOT NULL,
+                    version INTEGER NOT NULL DEFAULT 1,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 );
@@ -98,6 +123,10 @@ class Database:
                     user_id TEXT NOT NULL,
                     step TEXT NOT NULL CHECK (step IN ('action', 'name', 'image')),
                     draft_name TEXT,
+                    draft_action TEXT,
+                    selected_restaurant_id INTEGER,
+                    selected_restaurant_key TEXT,
+                    selected_version INTEGER,
                     expires_at TEXT NOT NULL,
                     PRIMARY KEY (group_id, user_id)
                 );
@@ -124,6 +153,24 @@ class Database:
                     "UPDATE restaurants SET normalized_display_name = lower(trim(display_name)) "
                     "WHERE normalized_display_name IS NULL"
                 )
+            if "version" not in columns:
+                connection.execute(
+                    "ALTER TABLE restaurants ADD COLUMN version INTEGER NOT NULL DEFAULT 1"
+                )
+            if "selection_key" not in columns:
+                connection.execute("ALTER TABLE restaurants ADD COLUMN selection_key TEXT")
+            missing_selection_keys = connection.execute(
+                "SELECT restaurant_id FROM restaurants WHERE selection_key IS NULL"
+            ).fetchall()
+            for (restaurant_id,) in missing_selection_keys:
+                connection.execute(
+                    "UPDATE restaurants SET selection_key = ? WHERE restaurant_id = ?",
+                    (uuid.uuid4().hex, restaurant_id),
+                )
+            connection.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS restaurants_selection_key_idx "
+                "ON restaurants(selection_key)"
+            )
             connection.execute(
                 "CREATE UNIQUE INDEX IF NOT EXISTS restaurants_group_normalized_name_idx "
                 "ON restaurants(group_id, normalized_display_name)"
@@ -135,6 +182,20 @@ class Database:
                 connection.execute(
                     "ALTER TABLE webhook_receipts ADD COLUMN user_id TEXT NOT NULL DEFAULT ''"
                 )
+            session_columns = {
+                row[1]
+                for row in connection.execute("PRAGMA table_info(management_sessions)").fetchall()
+            }
+            for column, declaration in (
+                ("draft_action", "TEXT"),
+                ("selected_restaurant_id", "INTEGER"),
+                ("selected_restaurant_key", "TEXT"),
+                ("selected_version", "INTEGER"),
+            ):
+                if column not in session_columns:
+                    connection.execute(
+                        f"ALTER TABLE management_sessions ADD COLUMN {column} {declaration}"
+                    )
 
     def restaurant_count(self, group_id: str) -> int:
         with self._connection() as connection:
@@ -151,7 +212,9 @@ class Database:
         now = self._utc_now()
         with self._connection() as connection:
             row = connection.execute(
-                "SELECT step, draft_name FROM management_sessions "
+                "SELECT step, draft_name, draft_action, selected_restaurant_id, "
+                "selected_restaurant_key, selected_version "
+                "FROM management_sessions "
                 "WHERE group_id = ? AND user_id = ? AND expires_at > ?",
                 (group_id, user_id, now),
             ).fetchone()
@@ -167,10 +230,154 @@ class Database:
         return ManagementSession(*row) if row else None
 
     def save_management_name(self, group_id: str, user_id: str, name: str) -> None:
-        self._save_session(group_id, user_id, "image", name)
+        self._save_session(group_id, user_id, "image", name, draft_action="add-image")
+
+    def save_edit_name(self, group_id: str, user_id: str, name: str) -> None:
+        session = self.active_management_session(group_id, user_id)
+        if (
+            session is None
+            or session.selected_restaurant_id is None
+            or session.selected_restaurant_key is None
+            or session.selected_version is None
+        ):
+            raise RuntimeError("Edit session is missing its restaurant selection")
+        self._save_session(
+            group_id,
+            user_id,
+            "image",
+            name,
+            draft_action="edit-image",
+            selected_restaurant_id=session.selected_restaurant_id,
+            selected_restaurant_key=session.selected_restaurant_key,
+            selected_version=session.selected_version,
+        )
+
+    def retry_edit_name(self, group_id: str, user_id: str) -> None:
+        session = self.active_management_session(group_id, user_id)
+        if (
+            session is None
+            or session.selected_restaurant_id is None
+            or session.selected_restaurant_key is None
+            or session.selected_version is None
+        ):
+            raise RuntimeError("Edit session is missing its restaurant selection")
+        self._save_session(
+            group_id,
+            user_id,
+            "name",
+            None,
+            draft_action="edit-name",
+            selected_restaurant_id=session.selected_restaurant_id,
+            selected_restaurant_key=session.selected_restaurant_key,
+            selected_version=session.selected_version,
+        )
 
     def begin_add_restaurant(self, group_id: str, user_id: str) -> None:
-        self._save_session(group_id, user_id, "name", None)
+        self._save_session(group_id, user_id, "name", None, draft_action="add")
+
+    def begin_restaurant_selection(self, group_id: str, user_id: str, action: str) -> None:
+        if action not in {"edit", "delete"}:
+            raise ValueError("Unsupported restaurant selection action")
+        self._save_session(
+            group_id,
+            user_id,
+            "action",
+            None,
+            draft_action=f"{action}-select",
+        )
+
+    def select_restaurant(
+        self, group_id: str, user_id: str, restaurant_id: int
+    ) -> Restaurant | None:
+        now = self._utc_now()
+        with self._connection() as connection:
+            session = connection.execute(
+                "SELECT draft_action FROM management_sessions "
+                "WHERE group_id = ? AND user_id = ? AND step = 'action' AND expires_at > ?",
+                (group_id, user_id, now),
+            ).fetchone()
+            if session is None or session[0] not in {"edit-select", "delete-select"}:
+                return None
+            row = connection.execute(
+                "SELECT restaurant_id, selection_key, display_name, source_image_url, version "
+                "FROM restaurants WHERE group_id = ? AND restaurant_id = ?",
+                (group_id, restaurant_id),
+            ).fetchone()
+            if row is None:
+                return None
+            action = session[0]
+            if action == "edit-select":
+                step = "name"
+                draft_action = "edit-name"
+                draft_name = None
+            else:
+                step = "action"
+                draft_action = "delete-confirm"
+                draft_name = row[2]
+            connection.execute(
+                "UPDATE management_sessions SET step = ?, draft_name = ?, draft_action = ?, "
+                "selected_restaurant_id = ?, selected_restaurant_key = ?, "
+                "selected_version = ?, expires_at = ? "
+                "WHERE group_id = ? AND user_id = ?",
+                (
+                    step,
+                    draft_name,
+                    draft_action,
+                    row[0],
+                    row[1],
+                    row[4],
+                    self._session_expiry(),
+                    group_id,
+                    user_id,
+                ),
+            )
+        return Restaurant(*row)
+
+    def delete_restaurant(
+        self,
+        group_id: str,
+        restaurant_id: int,
+        expected_key: str,
+        expected_version: int,
+    ) -> bool:
+        with self._connection() as connection:
+            deleted = connection.execute(
+                "DELETE FROM restaurants WHERE group_id = ? AND restaurant_id = ? "
+                "AND selection_key = ? AND version = ?",
+                (group_id, restaurant_id, expected_key, expected_version),
+            ).rowcount
+        return bool(deleted)
+
+    def update_restaurant(
+        self,
+        group_id: str,
+        restaurant_id: int,
+        expected_key: str,
+        expected_version: int,
+        display_name: str,
+        source_image_url: str,
+    ) -> str:
+        now = self._utc_now()
+        try:
+            with self._connection() as connection:
+                updated = connection.execute(
+                    "UPDATE restaurants SET display_name = ?, normalized_display_name = ?, "
+                    "source_image_url = ?, updated_at = ?, version = version + 1 "
+                    "WHERE group_id = ? AND restaurant_id = ? AND selection_key = ? AND version = ?",
+                    (
+                        display_name,
+                        _normalize_name(display_name),
+                        source_image_url,
+                        now,
+                        group_id,
+                        restaurant_id,
+                        expected_key,
+                        expected_version,
+                    ),
+                ).rowcount
+        except sqlite3.IntegrityError:
+            return "duplicate"
+        return "updated" if updated else "stale"
 
     def clear_management_session(self, group_id: str, user_id: str) -> None:
         with self._connection() as connection:
@@ -238,22 +445,32 @@ class Database:
     def add_restaurant(self, group_id: str, display_name: str, source_image_url: str) -> bool:
         normalized_name = _normalize_name(display_name)
         now = self._utc_now()
+        selection_key = uuid.uuid4().hex
         with self._connection() as connection:
             inserted = connection.execute(
                 """
                 INSERT OR IGNORE INTO restaurants(
-                    group_id, display_name, normalized_display_name, source_image_url,
-                    created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?)
+                    selection_key, group_id, display_name, normalized_display_name,
+                    source_image_url, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                (group_id, display_name, normalized_name, source_image_url, now, now),
+                (
+                    selection_key,
+                    group_id,
+                    display_name,
+                    normalized_name,
+                    source_image_url,
+                    now,
+                    now,
+                ),
             ).rowcount
         return bool(inserted)
 
     def list_restaurants(self, group_id: str) -> list[Restaurant]:
         with self._connection() as connection:
             rows = connection.execute(
-                "SELECT display_name, source_image_url FROM restaurants "
+                "SELECT restaurant_id, selection_key, display_name, source_image_url, version "
+                "FROM restaurants "
                 "WHERE group_id = ? ORDER BY restaurant_id",
                 (group_id,),
             ).fetchall()
@@ -266,18 +483,45 @@ class Database:
                 (group_id, self._utc_now()),
             )
 
-    def _save_session(self, group_id: str, user_id: str, step: str, draft_name: str | None) -> None:
+    def _save_session(
+        self,
+        group_id: str,
+        user_id: str,
+        step: str,
+        draft_name: str | None,
+        *,
+        draft_action: str | None = None,
+        selected_restaurant_id: int | None = None,
+        selected_restaurant_key: str | None = None,
+        selected_version: int | None = None,
+    ) -> None:
         with self._connection() as connection:
             connection.execute(
                 """
-                INSERT INTO management_sessions(group_id, user_id, step, draft_name, expires_at)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO management_sessions(
+                    group_id, user_id, step, draft_name, draft_action,
+                    selected_restaurant_id, selected_restaurant_key, selected_version, expires_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(group_id, user_id) DO UPDATE SET
                     step = excluded.step,
                     draft_name = excluded.draft_name,
+                    draft_action = excluded.draft_action,
+                    selected_restaurant_id = excluded.selected_restaurant_id,
+                    selected_restaurant_key = excluded.selected_restaurant_key,
+                    selected_version = excluded.selected_version,
                     expires_at = excluded.expires_at
                 """,
-                (group_id, user_id, step, draft_name, self._session_expiry()),
+                (
+                    group_id,
+                    user_id,
+                    step,
+                    draft_name,
+                    draft_action,
+                    selected_restaurant_id,
+                    selected_restaurant_key,
+                    selected_version,
+                    self._session_expiry(),
+                ),
             )
 
     def claim_webhook_event(

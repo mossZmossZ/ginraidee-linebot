@@ -9,6 +9,7 @@ import sqlite3
 from fastapi.testclient import TestClient
 
 from app.config import Settings
+from app.database import Database
 from app.main import create_app
 
 
@@ -177,6 +178,237 @@ def test_duplicate_management_event_is_processed_once(tmp_path: Path) -> None:
         post(client, repeated_add)
 
     assert [reply[1][0]["text"] for reply in transport.replies] == [
-        "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ หรือ ยกเลิก",
+        "เริ่มจัดการร้านอาหารแล้ว พิมพ์ เพิ่ม, รายการ, แก้ไข, ลบ หรือ ยกเลิก",
         "กรุณาส่งชื่อร้านอาหาร",
     ]
+
+
+def test_member_can_edit_a_restaurant_and_duplicate_names_can_be_corrected(
+    tmp_path: Path,
+) -> None:
+    transport = RecordingTransport()
+    settings = Settings("secret", "token", tmp_path / "state.db")
+    client = TestClient(create_app(settings, transport))
+
+    with client:
+        add_restaurant(client, name="ร้านแรก")
+        add_restaurant(client, user_id="member-2", name="ร้านสอง")
+        post(client, event("@ginrai-manage", "edit-manage", user_id="editor"))
+        post(client, event("แก้ไข", "edit-start", user_id="editor"))
+        selection_text = transport.replies[-1][1][1]["text"]
+        restaurant_id = int(selection_text.split()[0].removeprefix("#"))
+        post(client, event(str(restaurant_id), "edit-select", user_id="editor"))
+        post(client, event("ร้านสอง", "edit-duplicate-name", user_id="editor"))
+        post(
+            client,
+            event("https://images.example/duplicate.jpg", "edit-duplicate-url", user_id="editor"),
+        )
+        assert "มีร้านชื่อนี้อยู่แล้ว" in transport.replies[-1][1][0]["text"]
+        post(client, event("ร้านใหม่", "edit-new-name", user_id="editor"))
+        post(
+            client,
+            event("https://images.example/new.jpg", "edit-new-url", user_id="editor"),
+        )
+
+    assert transport.replies[-1][1] == [
+        {"type": "text", "text": "แก้ไขร้าน ร้านใหม่ แล้ว"},
+        {
+            "type": "image",
+            "originalContentUrl": "https://images.example/new.jpg",
+            "previewImageUrl": "https://images.example/new.jpg",
+        },
+    ]
+    with sqlite3.connect(settings.database_path) as connection:
+        row = connection.execute(
+            "SELECT display_name, source_image_url, version FROM restaurants WHERE restaurant_id = ?",
+            (restaurant_id,),
+        ).fetchone()
+    assert row == ("ร้านใหม่", "https://images.example/new.jpg", 2)
+
+
+def test_delete_requires_confirmation_and_cancel_preserves_restaurant(tmp_path: Path) -> None:
+    transport = RecordingTransport()
+    settings = Settings("secret", "token", tmp_path / "state.db")
+    client = TestClient(create_app(settings, transport))
+
+    with client:
+        add_restaurant(client, name="ร้านเก็บไว้")
+        post(client, event("@ginrai-manage", "delete-manage", user_id="deleter"))
+        post(client, event("ลบ", "delete-start", user_id="deleter"))
+        selection_text = transport.replies[-1][1][1]["text"]
+        restaurant_id = int(selection_text.split()[0].removeprefix("#"))
+        post(client, event(str(restaurant_id), "delete-select", user_id="deleter"))
+        post(client, event("ไม่ใช่", "delete-no-confirm", user_id="deleter"))
+        assert "กรุณาพิมพ์ ยืนยัน" in transport.replies[-1][1][0]["text"]
+        post(client, event("ยกเลิก", "delete-cancel", user_id="deleter"))
+        post(client, event("@ginrai-manage", "delete-manage-again", user_id="deleter"))
+        post(client, event("ลบ", "delete-start-again", user_id="deleter"))
+        post(client, event(str(restaurant_id), "delete-select-again", user_id="deleter"))
+        post(client, event("ยืนยัน", "delete-confirm", user_id="deleter"))
+
+    with sqlite3.connect(settings.database_path) as connection:
+        remaining = connection.execute(
+            "SELECT COUNT(*) FROM restaurants WHERE restaurant_id = ?", (restaurant_id,)
+        ).fetchone()[0]
+    assert remaining == 0
+    assert transport.replies[-1][1] == [{"type": "text", "text": "ลบร้าน ร้านเก็บไว้ แล้ว"}]
+
+
+def test_canceling_an_edit_and_rejecting_http_url_leave_catalog_unchanged(tmp_path: Path) -> None:
+    transport = RecordingTransport()
+    settings = Settings("secret", "token", tmp_path / "state.db")
+    client = TestClient(create_app(settings, transport))
+
+    with client:
+        add_restaurant(client, name="ร้านเดิม")
+        post(client, event("@ginrai-manage", "cancel-edit-manage", user_id="editor"))
+        post(client, event("แก้ไข", "cancel-edit-start", user_id="editor"))
+        selection_text = transport.replies[-1][1][1]["text"]
+        restaurant_id = int(selection_text.split()[0].removeprefix("#"))
+        post(client, event(str(restaurant_id), "cancel-edit-select", user_id="editor"))
+        post(client, event("ร้านที่เปลี่ยน", "cancel-edit-name", user_id="editor"))
+        post(
+            client,
+            event("http://images.example/new.jpg", "cancel-edit-http", user_id="editor"),
+        )
+        assert "HTTPS" in transport.replies[-1][1][0]["text"]
+        post(client, event("ยกเลิก", "cancel-edit-cancel", user_id="editor"))
+
+    with sqlite3.connect(settings.database_path) as connection:
+        row = connection.execute(
+            "SELECT display_name, source_image_url, version FROM restaurants WHERE restaurant_id = ?",
+            (restaurant_id,),
+        ).fetchone()
+    assert row == ("ร้านเดิม", "https://images.example/restaurant.jpg", 1)
+
+
+def test_foreign_group_id_and_stale_delete_cannot_mutate_restaurant(tmp_path: Path) -> None:
+    transport = RecordingTransport()
+    settings = Settings("secret", "token", tmp_path / "state.db")
+    client = TestClient(create_app(settings, transport))
+
+    with client:
+        add_restaurant(client, name="ร้านกลุ่มหนึ่ง")
+        with sqlite3.connect(settings.database_path) as connection:
+            restaurant_id = connection.execute(
+                "SELECT restaurant_id FROM restaurants WHERE group_id = ?", ("group-1",)
+            ).fetchone()[0]
+
+        post(
+            client,
+            event("@ginrai-manage", "foreign-manage", group_id="group-2", user_id="member"),
+        )
+        post(client, event("ลบ", "foreign-delete", group_id="group-2", user_id="member"))
+        post(
+            client,
+            event(str(restaurant_id), "foreign-select", group_id="group-2", user_id="member"),
+        )
+        assert "ไม่พบหมายเลขร้านนี้" in transport.replies[-1][1][0]["text"]
+        post(
+            client,
+            event("9" * 20, "foreign-huge-id", group_id="group-2", user_id="member"),
+        )
+        assert "ไม่พบหมายเลขร้านนี้" in transport.replies[-1][1][0]["text"]
+
+        post(client, event("@ginrai-manage", "stale-manage", user_id="deleter"))
+        post(client, event("ลบ", "stale-delete", user_id="deleter"))
+        post(client, event(str(restaurant_id), "stale-select", user_id="deleter"))
+        with sqlite3.connect(settings.database_path) as connection:
+            connection.execute(
+                "UPDATE restaurants SET version = version + 1 WHERE restaurant_id = ?",
+                (restaurant_id,),
+            )
+        post(client, event("ยืนยัน", "stale-confirm", user_id="deleter"))
+
+    with sqlite3.connect(settings.database_path) as connection:
+        row = connection.execute(
+            "SELECT display_name FROM restaurants WHERE restaurant_id = ?", (restaurant_id,)
+        ).fetchone()
+    assert row == ("ร้านกลุ่มหนึ่ง",)
+    assert "ถูกเปลี่ยนแปลง" in transport.replies[-1][1][0]["text"]
+
+
+def test_reused_sqlite_id_cannot_make_stale_confirmation_delete_new_restaurant(
+    tmp_path: Path,
+) -> None:
+    transport = RecordingTransport()
+    settings = Settings("secret", "token", tmp_path / "state.db")
+    client = TestClient(create_app(settings, transport))
+
+    with client:
+        add_restaurant(client, name="ร้านเก่า")
+        with sqlite3.connect(settings.database_path) as connection:
+            original_id, original_key = connection.execute(
+                "SELECT restaurant_id, selection_key FROM restaurants"
+            ).fetchone()
+
+        post(client, event("@ginrai-manage", "stale-owner-manage", user_id="stale-owner"))
+        post(client, event("ลบ", "stale-owner-delete", user_id="stale-owner"))
+        post(client, event(str(original_id), "stale-owner-select", user_id="stale-owner"))
+
+        post(client, event("@ginrai-manage", "new-owner-manage", user_id="new-owner"))
+        post(client, event("ลบ", "new-owner-delete", user_id="new-owner"))
+        post(client, event(str(original_id), "new-owner-select", user_id="new-owner"))
+        post(client, event("ยืนยัน", "new-owner-confirm", user_id="new-owner"))
+        add_restaurant(client, user_id="new-owner", name="ร้านใหม่")
+
+        post(client, event("ยืนยัน", "stale-owner-confirm", user_id="stale-owner"))
+
+    with sqlite3.connect(settings.database_path) as connection:
+        new_row = connection.execute(
+            "SELECT restaurant_id, selection_key, display_name FROM restaurants"
+        ).fetchone()
+    assert new_row[0] == original_id
+    assert new_row[2] == "ร้านใหม่"
+    assert new_row[1] != original_key
+    assert "ถูกเปลี่ยนแปลง" in transport.replies[-1][1][0]["text"]
+
+
+def test_existing_database_migration_preserves_restaurants_and_adds_selection_identity(
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "legacy.db"
+    with sqlite3.connect(database_path) as connection:
+        connection.executescript(
+            """
+            CREATE TABLE groups (group_id TEXT PRIMARY KEY, created_at TEXT NOT NULL);
+            CREATE TABLE restaurants (
+                restaurant_id INTEGER PRIMARY KEY,
+                group_id TEXT NOT NULL,
+                display_name TEXT NOT NULL,
+                source_image_url TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE TABLE management_sessions (
+                group_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                step TEXT NOT NULL,
+                draft_name TEXT,
+                expires_at TEXT NOT NULL,
+                PRIMARY KEY (group_id, user_id)
+            );
+            INSERT INTO groups VALUES ('legacy-group', '2026-10-16T00:00:00+00:00');
+            INSERT INTO restaurants VALUES (
+                47,
+                'legacy-group',
+                'ร้านเดิม',
+                'https://images.example/legacy.jpg',
+                '2026-10-16T00:00:00+00:00',
+                '2026-10-16T00:00:00+00:00'
+            );
+            """
+        )
+
+    database = Database(database_path)
+    database.initialize()
+    restaurant = database.list_restaurants("legacy-group")[0]
+
+    assert restaurant.restaurant_id == 47
+    assert restaurant.display_name == "ร้านเดิม"
+    assert restaurant.source_image_url == "https://images.example/legacy.jpg"
+    assert restaurant.version == 1
+    assert restaurant.selection_key
+    with sqlite3.connect(database_path) as connection:
+        session_columns = {row[1] for row in connection.execute("PRAGMA table_info(management_sessions)")}
+    assert "selected_restaurant_key" in session_columns
